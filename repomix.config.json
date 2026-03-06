@@ -1,0 +1,17 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      ".next/",
+      "node_modules/",
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml"
+    ]
+  },
+  "output": {
+    "topFiles": [".ai-status.md", "docs/"]
+  }
+}
