@@ -24,7 +24,9 @@ const actualsItems = [
   { href: "/actuals", label: "Month Close & History", icon: CalendarCheck },
 ] as const;
 
-export default function Sidebar() {
+type SidebarProps = { workspaceName?: string };
+
+export default function Sidebar({ workspaceName }: SidebarProps) {
   const pathname = usePathname();
   const [state, formAction] = useActionState(logoutAction, null as ActionResult | null);
 
@@ -44,6 +46,13 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 hidden md:flex flex-col border-r border-border bg-white">
+      {workspaceName && (
+        <div className="p-4 border-b border-border">
+          <p className="truncate text-sm font-medium text-foreground" title={workspaceName}>
+            {workspaceName}
+          </p>
+        </div>
+      )}
       <nav className="flex-1 flex flex-col gap-1 p-4">
         <p className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           MODELING

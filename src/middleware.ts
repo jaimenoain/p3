@@ -17,12 +17,18 @@ const protectedRoutePrefixes = [
 ];
 const guestRoutePrefix = "/guest";
 
+const authPaths = ["/login", "/signup", "/forgot-password"];
+
 function isProtectedPath(pathname: string): boolean {
   return protectedRoutePrefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
 }
 
 function isGuestPath(pathname: string): boolean {
   return pathname === guestRoutePrefix || pathname.startsWith(guestRoutePrefix + "/");
+}
+
+function isAuthPath(pathname: string): boolean {
+  return authPaths.some((path) => pathname === path || pathname.startsWith(path + "/"));
 }
 
 export async function middleware(request: NextRequest) {
@@ -48,7 +54,14 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  let user: { id: string } | null = null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error) user = data.user;
+  } catch {
+    user = null;
+  }
+
   const pathname = request.nextUrl.pathname;
 
   if (isProtectedPath(pathname) || isGuestPath(pathname)) {
@@ -59,7 +72,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (user && (pathname === "/" || pathname === LOGIN_PATH)) {
+  if (user && (pathname === "/" || isAuthPath(pathname))) {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = DASHBOARD_PATH;
     return NextResponse.redirect(dashboardUrl);
