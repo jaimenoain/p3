@@ -21,11 +21,11 @@ type FinancialTableRow = {
 
 function formatAccounting(value: number): string {
   const abs = Math.abs(value);
-  return new Intl.NumberFormat("en-US", {
+  const formatted = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(abs) *>
-    (value < 0 ? `(${formatted})` : formatted);
+  }).format(abs);
+  return value < 0 ? `(${formatted})` : formatted;
 }
 
 function buildFinancialTableRows(timeline: FinancialTimeline): FinancialTableRow[] {
