@@ -11,6 +11,8 @@ export const BlockTypeSchema = z.enum([
   "Marketing",
   "OpEx",
   "Capital",
+  "VariableCost",
+  "OneTime",
 ]);
 
 export type BlockType = z.infer<typeof BlockTypeSchema>;

@@ -27,6 +27,8 @@ const BLOCK_TYPES: BlockType[] = [
   "Marketing",
   "OpEx",
   "Capital",
+  "VariableCost",
+  "OneTime",
 ];
 
 /**
@@ -340,6 +342,7 @@ function BlockCard({
         initialPayload.monthlyMrrGrowthPercent ?? ""
       );
       base.arpa = String(initialPayload.arpa ?? "");
+      base.setupFee = String(initialPayload.setupFee ?? "");
       base.monthlyChurnPercent = String(
         initialPayload.monthlyChurnPercent ?? ""
       );
@@ -362,6 +365,16 @@ function BlockCard({
       base.fundingType = String(initialPayload.fundingType ?? "Equity");
       base.amount = String(initialPayload.amount ?? "");
       base.monthReceived = String(initialPayload.monthReceived ?? "");
+    } else if (block.type === "VariableCost") {
+      base.expenseName = String(initialPayload.expenseName ?? "");
+      base.percentageOfRevenue = String(initialPayload.percentageOfRevenue ?? "");
+      base.fixedCostPerCustomer = String(
+        initialPayload.fixedCostPerCustomer ?? ""
+      );
+    } else if (block.type === "OneTime") {
+      base.expenseName = String(initialPayload.expenseName ?? "");
+      base.amount = String(initialPayload.amount ?? "");
+      base.month = String(initialPayload.month ?? "");
     }
 
     return base;
@@ -968,6 +981,27 @@ function BlockCard({
               <div className="flex flex-col gap-1">
                 <label
                   className="text-sm font-medium"
+                  htmlFor={`${block.id}-setupFee`}
+                >
+                  Setup fee
+                </label>
+                <Input
+                  id={`${block.id}-setupFee`}
+                  name="setupFee"
+                  type="number"
+                  className="tabular-nums"
+                  value={formState.setupFee ?? ""}
+                  onChange={(event) =>
+                    handleChange("setupFee", event.target.value)
+                  }
+                  disabled={isUpdating}
+                  min={0}
+                  step="any"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-sm font-medium"
                   htmlFor={`${block.id}-monthlyChurnPercent`}
                 >
                   Monthly churn %
@@ -1173,6 +1207,74 @@ function BlockCard({
             </>
           )}
 
+          {block.type === "VariableCost" && (
+            <>
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-sm font-medium"
+                  htmlFor={`${block.id}-variablecost-expenseName`}
+                >
+                  Expense name
+                </label>
+                <Input
+                  id={`${block.id}-variablecost-expenseName`}
+                  name="expenseName"
+                  value={formState.expenseName ?? ""}
+                  onChange={(event) =>
+                    handleChange("expenseName", event.target.value)
+                  }
+                  disabled={isUpdating}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-sm font-medium"
+                  htmlFor={`${block.id}-variablecost-percentageOfRevenue`}
+                >
+                  Percentage of Revenue
+                </label>
+                <span className="text-xs text-muted-foreground">
+                  Decimal (e.g. 0.029 for 2.9%)
+                </span>
+                <Input
+                  id={`${block.id}-variablecost-percentageOfRevenue`}
+                  name="percentageOfRevenue"
+                  type="number"
+                  className="tabular-nums"
+                  value={formState.percentageOfRevenue ?? ""}
+                  onChange={(event) =>
+                    handleChange("percentageOfRevenue", event.target.value)
+                  }
+                  disabled={isUpdating}
+                  min={0}
+                  max={1}
+                  step="any"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-sm font-medium"
+                  htmlFor={`${block.id}-variablecost-fixedCostPerCustomer`}
+                >
+                  Fixed cost per customer
+                </label>
+                <Input
+                  id={`${block.id}-variablecost-fixedCostPerCustomer`}
+                  name="fixedCostPerCustomer"
+                  type="number"
+                  className="tabular-nums"
+                  value={formState.fixedCostPerCustomer ?? ""}
+                  onChange={(event) =>
+                    handleChange("fixedCostPerCustomer", event.target.value)
+                  }
+                  disabled={isUpdating}
+                  min={0}
+                  step="any"
+                />
+              </div>
+            </>
+          )}
+
           {block.type === "Capital" && (
             <>
               <div className="flex flex-col gap-1">
@@ -1231,6 +1333,67 @@ function BlockCard({
                   value={formState.monthReceived ?? ""}
                   onChange={(event) =>
                     handleChange("monthReceived", event.target.value)
+                  }
+                  disabled={isUpdating}
+                />
+              </div>
+            </>
+          )}
+
+          {block.type === "OneTime" && (
+            <>
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-sm font-medium"
+                  htmlFor={`${block.id}-onetime-expenseName`}
+                >
+                  Expense name
+                </label>
+                <Input
+                  id={`${block.id}-onetime-expenseName`}
+                  name="expenseName"
+                  value={formState.expenseName ?? ""}
+                  onChange={(event) =>
+                    handleChange("expenseName", event.target.value)
+                  }
+                  disabled={isUpdating}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-sm font-medium"
+                  htmlFor={`${block.id}-onetime-amount`}
+                >
+                  Amount
+                </label>
+                <Input
+                  id={`${block.id}-onetime-amount`}
+                  name="amount"
+                  type="number"
+                  className="tabular-nums"
+                  value={formState.amount ?? ""}
+                  onChange={(event) =>
+                    handleChange("amount", event.target.value)
+                  }
+                  disabled={isUpdating}
+                  min={0}
+                  step="any"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-sm font-medium"
+                  htmlFor={`${block.id}-onetime-month`}
+                >
+                  Month
+                </label>
+                <Input
+                  id={`${block.id}-onetime-month`}
+                  name="month"
+                  type="month"
+                  value={formState.month ?? ""}
+                  onChange={(event) =>
+                    handleChange("month", event.target.value)
                   }
                   disabled={isUpdating}
                 />
@@ -1324,6 +1487,7 @@ function BlockCard({
                   }
                 />
                 <ReadOnlyRow label="ARPA" value={formState.arpa} />
+                <ReadOnlyRow label="Setup fee" value={formState.setupFee} />
                 <ReadOnlyRow
                   label="Monthly churn %"
                   value={formState.monthlyChurnPercent}
@@ -1369,6 +1533,22 @@ function BlockCard({
                 />
               </div>
             )}
+            {block.type === "VariableCost" && (
+              <div className="flex flex-col gap-2">
+                <ReadOnlyRow
+                  label="Expense name"
+                  value={formState.expenseName}
+                />
+                <ReadOnlyRow
+                  label="Percentage of Revenue"
+                  value={formState.percentageOfRevenue}
+                />
+                <ReadOnlyRow
+                  label="Fixed cost per customer"
+                  value={formState.fixedCostPerCustomer}
+                />
+              </div>
+            )}
             {block.type === "Capital" && (
               <div className="flex flex-col gap-2">
                 <ReadOnlyRow
@@ -1380,6 +1560,16 @@ function BlockCard({
                   label="Month received"
                   value={formState.monthReceived}
                 />
+              </div>
+            )}
+            {block.type === "OneTime" && (
+              <div className="flex flex-col gap-2">
+                <ReadOnlyRow
+                  label="Expense name"
+                  value={formState.expenseName}
+                />
+                <ReadOnlyRow label="Amount" value={formState.amount} />
+                <ReadOnlyRow label="Month" value={formState.month} />
               </div>
             )}
           </div>
