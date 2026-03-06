@@ -16,7 +16,7 @@ export type UpdateCashBalanceResult =
 /**
  * Ensures the authenticated user has a default tenant: one Organization, membership as owner,
  * one Workspace, and one baseline Scenario. Idempotent: if already provisioned, returns success.
- * RLS: organization_members.user_id must match the current auth user.
+ * Uses provision_tenant RPC (SECURITY DEFINER) so inserts bypass RLS and run atomically.
  */
 export async function provisionTenantAction(): Promise<ProvisionResult> {
   const supabase = await createClient();
@@ -42,49 +42,14 @@ export async function provisionTenantAction(): Promise<ProvisionResult> {
     return { ok: true };
   }
 
-  const { data: org, error: orgError } = await supabase
-    .from("organizations")
-    .insert({ name: "My Startup" })
-    .select("id")
-    .single();
-
-  if (orgError || !org) {
-    return { ok: false, error: orgError?.message ?? "Failed to create organization." };
-  }
-
-  const { error: memberError } = await supabase.from("organization_members").insert({
-    organization_id: org.id,
-    user_id: userId,
-    role: "owner",
+  const { error } = await supabase.rpc("provision_tenant", {
+    new_user_id: userId,
+    org_name: "My Startup",
+    workspace_name: "Primary Workspace",
   });
 
-  if (memberError) {
-    return { ok: false, error: memberError.message };
-  }
-
-  const { data: workspace, error: workspaceError } = await supabase
-    .from("workspaces")
-    .insert({
-      organization_id: org.id,
-      name: "Primary Workspace",
-      starting_cash_balance: null,
-    })
-    .select("id")
-    .single();
-
-  if (workspaceError || !workspace) {
-    return { ok: false, error: workspaceError?.message ?? "Failed to create workspace." };
-  }
-
-  const { error: scenarioError } = await supabase.from("scenarios").insert({
-    workspace_id: workspace.id,
-    name: "Baseline",
-    is_active_baseline: true,
-    global_assumptions: {},
-  });
-
-  if (scenarioError) {
-    return { ok: false, error: scenarioError.message };
+  if (error) {
+    return { ok: false, error: error.message };
   }
 
   return { ok: true };
