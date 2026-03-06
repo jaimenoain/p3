@@ -44,7 +44,7 @@ export async function signUpAction(_prev: unknown, formData: FormData): Promise<
   if (error) {
     return { error: error.message };
   }
-  return { success: true, redirectTo: "/login" };
+  return { success: true, redirectTo: "/signup/confirm" };
 }
 
 export async function forgotPasswordAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
