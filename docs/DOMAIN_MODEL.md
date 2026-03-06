@@ -168,11 +168,11 @@ CREATE TABLE blocks (
 
 CREATE INDEX idx\_blocks\_scenario ON blocks(scenario\_id);
 
-**Payload structure (implementation):** All block-specific data lives in the single \`payload\` JSONB column. There are no separate tables for block fields. Type-specific keys (e.g. \`roleName\`, \`monthlyGrossSalary\` for Personnel) are stored alongside an optional \`dependencies\` object whose keys are field names and values are \`{ mode, value?, referenceId?, formula? }\` for Static, Referenced, or Formula input modes.
+**Payload structure (implementation):** All block-specific data lives in the single \`payload\` JSONB column. There are no separate tables for block fields. Type-specific keys (e.g. \`roleName\`, \`monthlyGrossSalary\` for Personnel) are stored alongside an optional \`dependencies\` object whose keys are field names and values are \`{ mode, value?, referenceId?, formula? }\` for Static, Referenced, or Formula input modes. OpEx blocks use \`expenseType\`: \`fixed\` (recurring: \`monthlyCost\`, optional \`annualGrowthRatePercent\`), \`variable\` (\`percentageOfRevenue\` or \`fixedCostPerCustomer\`), or \`one-off\` (\`amount\`, \`month\`).
 
 #### **Component 2: Security Policies (The Firewall)**
 
-* **RLS Isolation:** The `workspaces` table has RLS enabled with SELECT and UPDATE policies that restrict access to rows where `organization_id` is in the set of organizations for which `auth.uid()` appears in `organization_members.user_id`. Because `scenarios` and `blocks` are strictly keyed to a single workspace via foreign keys, this effectively gates all projection data behind the tenant's organization; cross-tenant access is enforced as impossible at the database layer.
+* **RLS Isolation:** The \`workspaces\` table has RLS enabled with SELECT and UPDATE policies restricting access to rows where \`organization_id\` is in the set of organizations for which \`auth.uid()\` appears in \`organization_members.user_id\`. The \`scenarios\` table has RLS with SELECT, INSERT, UPDATE, and DELETE restricted to rows whose \`workspace_id\` belongs to such an organization. The \`blocks\` table has RLS with SELECT, INSERT, UPDATE, and DELETE restricted to rows whose \`scenario_id\` belongs to a scenario in a workspace in an organization where the user is a member (tenant path: blocks → scenarios → workspaces → organization_members). Cross-tenant access is enforced at the database layer.
 
 #### **Component 3: API Route Registry & DTOs (The Contract)**
 
@@ -235,6 +235,8 @@ JSON
 ---
 
 ### **Domain 3: The Financial Actuals & Period Domain**
+
+**Implementation note:** The tables and APIs below (chart_of_accounts, monthly_periods, historical_records) are specified for future implementation. No Supabase migrations exist yet for Domain 3; CSV ingestion, Month Close, and Health Score are out of scope for the current Phase 4 codebase.
 
 #### **Component 1: Database Schema (The Foundation)**
 

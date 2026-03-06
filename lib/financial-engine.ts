@@ -34,10 +34,27 @@ function getNumber(props: Record<string, unknown>, key: string, fallback = 0): n
   const v = props[key];
   if (typeof v === "number" && !Number.isNaN(v)) return v;
   if (typeof v === "string") {
-    const n = Number(v);
+    const normalized = v.replace(/\s/g, "").replace(/,/g, "");
+    const n = Number(normalized);
     if (!Number.isNaN(n)) return n;
   }
   return fallback;
+}
+
+/** Read MRR from a Revenue block payload. Tries canonical keys so revenue is always included in runway. */
+function getRevenueMrrFromPayload(p: Record<string, unknown>): number {
+  const candidates = ["startingMrr", "mrr", "StartingMrr"];
+  for (const key of candidates) {
+    const val = p[key];
+    if (val === undefined) continue;
+    if (typeof val === "number" && !Number.isNaN(val)) return val;
+    if (typeof val === "string") {
+      const normalized = val.replace(/\s/g, "").replace(/,/g, "");
+      const n = Number(normalized);
+      if (!Number.isNaN(n)) return n;
+    }
+  }
+  return 0;
 }
 
 /** YYYY-MM for projection month (e.g. 2026-01). V1: use base year 2026, month 1..12. */
@@ -75,13 +92,11 @@ export function calculateFinancials(
   for (let m = 1; m <= MONTHS; m++) {
     const monthKey = projectionMonthToKey(m);
 
-    // --- Revenue: MRR (and cash in from recurring billing)
+    // --- Revenue: MRR (and cash in from recurring billing). All active Revenue blocks contribute.
     let mrr = 0;
     for (const b of active) {
       if (b.type !== "Revenue") continue;
-      const p = b.properties;
-      const revMrr = getNumber(p, "startingMrr", getNumber(p, "mrr", 0));
-      mrr += revMrr;
+      mrr += getRevenueMrrFromPayload(b.properties);
     }
 
     // --- Capital: one-time cash in for this month

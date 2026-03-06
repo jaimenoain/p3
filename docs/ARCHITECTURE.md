@@ -87,7 +87,7 @@ Phase 3 delivers the Projection Canvas: block CRUD, typed JSONB payloads, depend
 
 ### Block recalculation and dependency UI
 
-- **Recalculation overlay:** Any mutation that affects the model (add block, update block, update dependency, toggle active) is wrapped in `runWithRecalculation`: a full-canvas overlay is shown for at least ~1 second with the text “Recalculating model...” while the Server Action runs. This provides a synchronous lock as specified; the actual 30/360 engine computation is not yet wired — the overlay is UX-only.
+- **Recalculation overlay:** Any mutation that affects the model (add block, update block, update dependency, toggle active) is wrapped in `runWithRecalculation`: a full-canvas overlay is shown for at least ~1 second with the text “Recalculating model...” while the Server Action runs. This provides a synchronous lock as specified; the 30/360 engine is invoked when the user visits the Output Dashboard (`getScenarioFinancials` → `calculateFinancials`); the overlay provides a synchronous lock on the Canvas while mutations complete.
 - **Dependency graph (client):** The client builds a directed graph from `payload.dependencies`: for each block, entries with `mode === 'Referenced'` and `referenceId` define edges (child → parent). Used to disable options in the Revenue “New customers” reference dropdown: the current block and any block already downstream (reachable from the current block) are shown but disabled to prevent cycles.
 - **Dependency updates (server):** `updateBlockDependencyMutation` builds the same graph from all blocks in the scenario, performs cycle detection (`wouldCreateCycle`), and rejects with “Circular dependency detected. This connection is not allowed.” if adding the chosen reference would create a cycle. Valid updates are written into `blocks.payload.dependencies` and the path `/canvas` is revalidated.
 - **Reference field in UI (V1):** Only the Revenue block’s “New customers (source)” field is implemented as a referenceable input. It can be Static (numeric value) or Referenced (dropdown of Marketing or Personnel sales blocks that expose a new-customers value). Formula mode exists in the payload schema but is not yet exposed in the Canvas UI.
@@ -96,6 +96,28 @@ Phase 3 delivers the Projection Canvas: block CRUD, typed JSONB payloads, depend
 
 - **Table:** `public.blocks` — `id`, `scenario_id`, `type` (Personnel | Revenue | Marketing | OpEx | Capital), `is_active`, `payload` (JSONB), `title` (nullable), `created_at`, `updated_at`. RLS restricts access to blocks whose scenario belongs to a workspace in an organization where the user is a member.
 - **Payload:** Type-specific keys plus optional `dependencies` map. All validation is done in Server Actions via Zod schemas keyed by `blocks.type`; no separate REST DTO layer.
+
+---
+
+## Phase 4: Calculation Engine & Output Dashboard (Current State)
+
+Phase 4 wires the 30/360 financial engine to the Dashboard and delivers the Runway Chart, Financial Table, and Tripwire.
+
+### Dashboard route and data flow
+
+- **Route:** `/dashboard` (protected by middleware). Page is a Server Component that reads optional `?months=12|24|36` (default 12) and calls `getScenarioFinancials()` with no arguments to resolve the authenticated user's active baseline scenario.
+- **Server action** `getScenarioFinancials(scenarioId?)`: Fetches scenario, workspace `starting_cash_balance`, and all blocks for the scenario via Supabase (RLS enforces tenant isolation). Maps rows to `BlockDTO` (properties = payload), runs `calculateFinancials(startingCash, blocks)` from `lib/financial-engine.ts`, and returns scenario name plus a 12‑month `FinancialTimeline` (MRR, totalCashIn, personnelOut, opexOut, totalCashOut, netBurn, endingCash per month).
+- **Rendering:** On success, the page passes `financialTimeline`, `scenarioName`, and `months` to `RunwayDashboardClient` (client component). Below that it renders a 12‑month Financial Table in a card. The table and chart do not use `/api/v1/*`; all data is server-fetched and passed as props.
+
+### Runway Chart and Tripwire
+
+- **Chart:** Implemented in `RunwayDashboardClient` (`app/(dashboard)/dashboard/runway-dashboard-client.tsx`) using Recharts. A **ComposedChart** shows: **Bar** series for Revenue (cash in) and Gross Burn (total cash out), and an **Area** series for Ending Cash Balance. X-axis is month (M1–M12 or M1–M36 depending on timeframe). Design tokens `chart-1`, `chart-2`, `chart-3` and `tabular-nums` are used. For 24/36 months, the client extrapolates from the 12‑month engine output (constant net burn from month 12).
+- **Timeframe:** Driven by URL search param `?months=12|24|36`. Toggles are implemented with Next.js `Link`; default 12 when the parameter is absent.
+- **Tripwire:** Logic finds the first month where ending cash ≤ 0. Result is shown in a **standalone card** above the chart: either "Tripwire: Cash Out in {Month Year}" with destructive styling, or "Runway Clear" with success styling. There is no vertical line on the chart in the current implementation.
+
+### Financial Table
+
+- **Location:** Rendered below the chart on the dashboard page. Rows (in order): Cash Inflows (summary), MRR / Recurring Revenue, Capital & Other Inflows, Cash Outflows / Gross Burn (summary), Personnel Costs, Marketing & Ads, General OpEx, Net Cash Flow / Net Burn, Ending Cash Balance. Columns: M1–M12. All numerical cells use `tabular-nums`. The table always shows the 12‑month projection from the engine; it does not expand for 24/36.
 
 ---
 

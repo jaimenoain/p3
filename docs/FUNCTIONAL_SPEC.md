@@ -119,7 +119,7 @@ Engineering must implement a suggested auto-grouping feature (e.g., rows contain
 
 The Canvas is the primary workspace where founders build their forward-looking financial model. Users add and configure Building Blocks on a monthly timeline without writing formulas. Blocks are connected through a dropdown-based dependency system (see Section 4.4).
 
-**Current implementation (Phase 3):** The Canvas is implemented at `/canvas`. Blocks are stored in `public.blocks` with a single JSONB `payload` column holding all type-specific fields and an optional `dependencies` map (field name → `{ mode, value?, referenceId?, formula? }`). The UI provides a "New block" selector and a grid of block cards; each card supports edit (type-specific forms), save, delete, and an On/Off toggle. Only the Revenue block's "New customers (source)" field is wired as a referenceable input (Static or Referenced via dropdown). Cycle prevention is enforced both in the client (dropdown disables downstream blocks) and on the server in `updateBlockDependencyMutation`. A full-canvas "Recalculating model..." overlay runs for at least ~1 second on any block or dependency change; the actual 30/360 projection engine is not yet invoked. Inactive blocks are shown in a collapsible "Inactive Projections" tray. Block titles are stored in `blocks.title` and are editable in the card header.
+**Current implementation (Phase 3–4):** The Canvas is implemented at `/canvas`. Blocks are stored in `public.blocks` with a single JSONB `payload` column holding all type-specific fields and an optional `dependencies` map (field name → `{ mode, value?, referenceId?, formula? }`). The UI provides a "New block" selector and a grid of block cards; each card supports edit (type-specific forms), save, delete, and an On/Off toggle. Only the Revenue block's "New customers (source)" field is wired as a referenceable input (Static or Referenced via dropdown). Cycle prevention is enforced both in the client (dropdown disables downstream blocks) and on the server in `updateBlockDependencyMutation`. A full-canvas "Recalculating model..." overlay runs for at least ~1 second on any block or dependency change. The 30/360 projection engine is invoked when the user visits the Output Dashboard (`getScenarioFinancials` → `calculateFinancials`); dashboard data reflects the current scenario and blocks. Inactive blocks are shown in a collapsible "Inactive Projections" tray. Block titles are stored in `blocks.title` and are editable in the card header.
 
 ## **4.2 Mathematical Engine Rules**
 
@@ -298,44 +298,28 @@ The output dashboard is the primary read surface. It is always filtered by the c
 
 ## **9.2 The Runway Chart**
 
-A stacked area chart with the following specifications:
+**Current implementation (Phase 4):** The dashboard uses a Recharts **ComposedChart** (not a stacked area chart). X-axis: monthly timeline (M1–M12, or M1–M24/M1–M36 when the user selects a longer timeframe via URL `?months=12|24|36`). Displayed series: **Bar** for Revenue (total cash in), **Bar** for Gross Burn (total cash out), and **Area** for Ending Cash Balance. For 24/36 months, the client extrapolates from the 12‑month engine output (constant net burn from month 12). Design tokens (e.g. `chart-1`, `chart-2`, `chart-3`) and `tabular-nums` are used. CSV actuals overlay and a vertical tripwire line on the chart are not yet implemented.
 
-* X-axis: Monthly timeline (from model start to end of projection horizon).
-
-* Displayed series: Cash Balance (projected) as a filled area; Cash Balance (actual) as a solid line overlaid where CSV data exists; Gross Burn as a secondary area.
-
-* Runway Tripwire: A vertical red dashed line marking the projected date at which Cash Balance reaches $0. The line moves dynamically when blocks, scenarios, or variables are modified. The date is labeled directly on the line.
-
-* Actuals vs. Projected divergence is visually distinct — projected uses a lighter fill, actuals use a solid overlay.
+* Future: Cash Balance (actual) as a solid line where CSV data exists; vertical red dashed tripwire line on the chart; actuals vs. projected divergence styling.
 
 ## **9.3 The Monthly Financial Table**
 
-A month-by-month table synchronized with the chart. Columns:
+**Current implementation (Phase 4):** A month-by-month table below the chart. **Rows** (in order): Cash Inflows (summary), MRR / Recurring Revenue, Capital & Other Inflows, Cash Outflows / Gross Burn (summary), Personnel Costs, Marketing & Ads, General OpEx, Net Cash Flow / Net Burn, Ending Cash Balance. **Columns:** M1–M12 (no Month column). The table always shows the 12‑month projection from the calculation engine; numerical cells use `tabular-nums`. Cell behavior for months with CSV actuals (muted gray projected, variance in red/green) is not yet implemented.
 
-| Column | Description |
+| Column (current) | Description |
 | :---- | :---- |
-| **Month** | Calendar month label. |
-| **Revenue** | Total MRR / cash revenue for the month. |
-| **COGS** | Cost of Goods Sold. |
-| **Gross Profit** | Revenue minus COGS. |
-| **OpEx** | Total operating expenses (Personnel \+ Fixed OpEx). |
-| **Net Burn** | Gross Profit minus OpEx. Negative \= burning cash. |
-| **Cash Balance** | Running cash position. |
-| **Runway** | Months of runway remaining from this month, given current net burn. |
+| **Metric** | Row label (e.g. MRR, Personnel Costs, Ending Cash Balance). |
+| **M1 … M12** | Value for that projection month. |
 
-Cell behavior in months with CSV actuals: projected value displayed in muted gray with strikethrough; actual value in full contrast black; variance displayed below in red (negative) or green (positive).
+Future columns (from original spec): Month, COGS, Gross Profit, Runway; and CSV-driven cell styling.
 
 ## **9.4 Runway Tripwire Definition**
 
-The Runway Tripwire is the projected calendar date on which the Cash Balance first reaches $0, given the current active scenario's block configuration and the last known actual cash balance. It is:
+The Runway Tripwire is the projected calendar date on which the Cash Balance first reaches $0, given the current active scenario's block configuration and the last known actual cash balance.
 
-* Displayed as a labeled vertical line on the Runway Chart.
+**Current implementation (Phase 4):** Tripwire is displayed as a **standalone card** above the Runway chart, not as a vertical line on the chart. If the first month where ending cash ≤ 0 is found, the card shows "Tripwire: Cash Out in {Month Year}" with destructive styling (red border/background). If runway survives the selected timeframe (12/24/36 months), the card shows "Runway Clear" with success styling. The value is updated when the user loads or refreshes the dashboard (engine runs via `getScenarioFinancials`). A "Runway: Aug 2027 — 17 months" style metric at the top of the dashboard and a vertical line on the chart are not yet implemented.
 
-* Displayed as a standalone metric at the top of the dashboard (e.g., 'Runway: Aug 2027 — 17 months').
-
-* Updated dynamically whenever any block, global variable, or scenario toggle is changed and recalculated.
-
-* Recalculated against all scenarios on CSV ingestion (results rendered lazily per scenario).
+* Future: Labeled vertical line on the Runway Chart; standalone metric (e.g. 'Runway: Aug 2027 — 17 months'); lazy recalculation per scenario on CSV ingestion.
 
 # **10\. Known Risks & Engineering Constraints**
 
