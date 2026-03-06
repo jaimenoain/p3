@@ -98,6 +98,15 @@ const RevenuePayloadSchema = z
     .coerce.number()
     .min(0, "Monthly churn % must be between 0 and 1")
     .max(1, "Monthly churn % must be between 0 and 1"),
+  monthlyMrrGrowthPercent: z
+    .union([
+      z
+        .coerce.number()
+        .min(0, "Monthly MRR growth % must be between 0 and 1")
+        .max(1, "Monthly MRR growth % must be between 0 and 1"),
+      z.null(),
+    ])
+    .optional(),
   billingFrequency: BillingFrequencySchema,
 })
   .merge(BlockDependenciesSchema);

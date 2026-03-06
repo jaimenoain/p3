@@ -151,13 +151,15 @@ Toggling a Parent Block to 'off' triggers a temporary, cascading unlinking of al
 
 ### **Concept**
 
-Any numeric input field on any block can be set to one of three modes:
+Numeric input fields that vary by scenario or can be driven by other blocks support three modes (where applicable; see each block section for which fields are referenceable):
 
 * Static: A constant value entered directly by the user.
 
 * Referenced: Points to a named output slot of another block. The value updates automatically when the source block recalculates.
 
 * Formula: Combines one or more references and/or static constants using the operators \+, \-, ×, ÷. Example: aws\_cost \= total\_revenue\_mrr × 0.08
+
+One-off initial values (e.g. Revenue’s Starting MRR) are **static only** and do not support Referenced or Formula.
 
 ### **Output Slots**
 
@@ -167,7 +169,7 @@ Every block exposes a defined set of named output slots. Examples:
 | :---- | :---- |
 | **Revenue** | mrr, new\_customers, churned\_customers, mrr\_cumulative, new\_customers\_cumulative |
 | **Marketing** | new\_customers\_generated, total\_spend, total\_spend\_cumulative |
-| **Personnel** | total\_headcount, total\_salary\_cost, total\_fully\_loaded\_cost, total\_salary\_cost\_cumulative |
+| **Personnel** | total\_headcount, total\_salary\_cost, total\_fully\_loaded\_cost, total\_salary\_cost\_cumulative; **new\_clients** (sales roles only) |
 | **OpEx (Fixed)** | monthly\_cost, monthly\_cost\_cumulative |
 | **Capital** | cash\_injected |
 
@@ -188,16 +190,20 @@ All five block types below are required for V1. Each block's inputs can be Stati
 | **End Month** | Optional. If set, the block's cost contribution terminates after this month. |
 | **Headcount Count** | Number of people in this role (default: 1). Can be a static integer or a Referenced/Formula value. |
 
+For **sales** roles (role type Sales): *new\_clients* per month is derived from headcount × new clients per month at full ramp, with ramp from start month (see output slots). Revenue blocks can reference this as the New customers source.
+
 ## **5.2 Revenue Block**
 
 | Field | Specification |
 | :---- | :---- |
-| **Starting MRR** | Initial Monthly Recurring Revenue at model start. |
+| **Starting MRR** | Initial Monthly Recurring Revenue at model start. **Static only** (entered directly; not referenceable). |
+| **New customers (source)** | Number of new customers per month. **Static** (constant value, e.g. 0) or **Referenced** (e.g. Marketing’s new\_customers\_generated, or Personnel sales’ new\_clients). Multiplied by ARPA to get MRR growth from acquisitions. |
 | **ARPA** | Average Revenue Per Account. Used to convert new customer count into MRR contribution. |
 | **Monthly Churn %** | Applied to existing MRR each month. |
+| **Monthly MRR growth %** | Optional. Static only; e.g. 0.05 for 5% MoM. Applied additively to MRR before churn (see formula). Default 0. |
 | **Billing Frequency** | Monthly or Annual Prepaid. If Annual: cash injection \= 12 months of MRR in Month 1; $0 cash inflow for months 2–12. Cohort renewal at Month 13 \= (initial cohort customers − cumulative churn) × annual ticket. |
 
-MRR formula (monthly): MRR(n) \= MRR(n-1) \+ (New Customers(n) × ARPA) − (MRR(n-1) × Churn %)
+MRR formula (monthly): MRR(n) \= MRR(n-1) \+ (New Customers(n) × ARPA) \+ (MRR(n-1) × growth%) − (MRR(n-1) × Churn %). *New Customers(n)* comes from the block’s New customers (source). *growth%* is Monthly MRR growth % (0 if not set).
 
 ## **5.3 Marketing Block**
 

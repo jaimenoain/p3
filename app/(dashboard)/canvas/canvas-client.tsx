@@ -261,10 +261,14 @@ function BlockCard({
 
   const initialPayload = (block.payload ?? {}) as Record<string, unknown>;
   const initialDependencies = (initialPayload.dependencies ??
-    {}) as Record<string, { mode: NumericInputMode; referenceId?: string }>;
-  const initialStartingMrrDependency = initialDependencies[
-    "startingMrr"
-  ] ?? { mode: "Static" as NumericInputMode, referenceId: "" };
+    {}) as Record<
+    string,
+    { mode: NumericInputMode; value?: number; referenceId?: string }
+  >;
+  const initialNewCustomersDependency = initialDependencies["newCustomers"] ?? {
+    mode: "Static" as NumericInputMode,
+    value: 0,
+  };
 
   const [isEditing, setIsEditing] = useState<boolean>(
     Object.keys(initialPayload).length === 0
@@ -293,6 +297,14 @@ function BlockCard({
       );
     } else if (block.type === "Revenue") {
       base.startingMrr = String(initialPayload.startingMrr ?? "");
+      base.newCustomersStatic = String(
+        initialNewCustomersDependency.mode === "Static"
+          ? initialNewCustomersDependency.value ?? 0
+          : 0
+      );
+      base.monthlyMrrGrowthPercent = String(
+        initialPayload.monthlyMrrGrowthPercent ?? ""
+      );
       base.arpa = String(initialPayload.arpa ?? "");
       base.monthlyChurnPercent = String(
         initialPayload.monthlyChurnPercent ?? ""
@@ -321,14 +333,92 @@ function BlockCard({
     return base;
   });
 
-  const [startingMrrMode, setStartingMrrMode] = useState<NumericInputMode>(
-    initialStartingMrrDependency.mode
+  const [newCustomersMode, setNewCustomersMode] =
+    useState<NumericInputMode>(initialNewCustomersDependency.mode);
+  const [newCustomersReferenceId, setNewCustomersReferenceId] = useState(
+    initialNewCustomersDependency.referenceId ?? ""
   );
-  const [startingMrrReferenceId, setStartingMrrReferenceId] =
-    useState<string>(initialStartingMrrDependency.referenceId ?? "");
 
   function handleChange(name: string, value: string) {
     setFormState((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function buildDependencyEdges() {
+    const edges = new Map<string, Set<string>>();
+    for (const b of allBlocks) {
+      const payload = (b.payload ?? {}) as Record<string, unknown>;
+      const deps = (payload.dependencies ??
+        {}) as Record<string, { mode: string; referenceId?: string }>;
+      for (const cfg of Object.values(deps)) {
+        if (cfg?.mode === "Referenced" && cfg.referenceId) {
+          if (!edges.has(b.id)) edges.set(b.id, new Set<string>());
+          edges.get(b.id)!.add(cfg.referenceId);
+        }
+      }
+    }
+    return edges;
+  }
+
+  function getDownstreamIdsForBlock() {
+    const edges = buildDependencyEdges();
+    const visited = new Set<string>();
+    const stack: string[] = [block.id];
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      if (visited.has(current)) continue;
+      visited.add(current);
+      const neighbors = edges.get(current);
+      if (neighbors) for (const id of neighbors) stack.push(id);
+    }
+    visited.delete(block.id);
+    return visited;
+  }
+
+  async function handleNewCustomersModeChange(
+    mode: NumericInputMode
+  ): Promise<void> {
+    const previous = newCustomersMode;
+    setNewCustomersMode(mode);
+    const result = await runWithRecalculation(() =>
+      updateBlockDependencyMutation({
+        blockId: block.id,
+        field: "newCustomers",
+        mode,
+        value:
+          mode === "Static"
+            ? Number(formState.newCustomersStatic) || 0
+            : undefined,
+        referenceId:
+          mode === "Referenced" ? newCustomersReferenceId || undefined : undefined,
+      })
+    );
+    if (!result.ok) {
+      setNewCustomersMode(previous);
+      showToast(result.error);
+      return;
+    }
+    onUpdated(result.block);
+  }
+
+  async function handleNewCustomersReferenceChange(
+    referenceId: string
+  ): Promise<void> {
+    const previous = newCustomersReferenceId;
+    setNewCustomersReferenceId(referenceId);
+    const result = await runWithRecalculation(() =>
+      updateBlockDependencyMutation({
+        blockId: block.id,
+        field: "newCustomers",
+        mode: "Referenced",
+        referenceId: referenceId || undefined,
+      })
+    );
+    if (!result.ok) {
+      setNewCustomersReferenceId(previous);
+      showToast(result.error);
+      return;
+    }
+    onUpdated(result.block);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -343,6 +433,29 @@ function BlockCard({
         payload[key] = value;
       }
     });
+
+    if (block.type === "Revenue") {
+      const existingDeps = (initialPayload.dependencies ?? {}) as Record<
+        string,
+        { mode: string; value?: number; referenceId?: string }
+      >;
+      const newCustomersValue =
+        newCustomersMode === "Static"
+          ? Number(formState.newCustomersStatic) || 0
+          : undefined;
+      payload.dependencies = {
+        ...existingDeps,
+        startingMrr: { mode: "Static" },
+        newCustomers: {
+          mode: newCustomersMode,
+          ...(newCustomersValue !== undefined ? { value: newCustomersValue } : {}),
+          ...(newCustomersMode === "Referenced" && newCustomersReferenceId
+            ? { referenceId: newCustomersReferenceId }
+            : {}),
+        },
+      };
+      delete payload.newCustomersStatic;
+    }
 
     startUpdateTransition(async () => {
       const result = await runWithRecalculation(() =>
@@ -384,96 +497,6 @@ function BlockCard({
 
       onUpdated(result.block);
     });
-  }
-
-  function buildDependencyEdges() {
-    const edges = new Map<string, Set<string>>();
-
-    for (const b of allBlocks) {
-      const payload = (b.payload ?? {}) as Record<string, unknown>;
-      const deps = (payload.dependencies ??
-        {}) as Record<string, { mode: NumericInputMode; referenceId?: string }>;
-
-      for (const cfg of Object.values(deps)) {
-        if (cfg && cfg.mode === "Referenced" && cfg.referenceId) {
-          if (!edges.has(b.id)) {
-            edges.set(b.id, new Set<string>());
-          }
-          edges.get(b.id)!.add(cfg.referenceId);
-        }
-      }
-    }
-
-    return edges;
-  }
-
-  function getDownstreamIdsForBlock() {
-    const edges = buildDependencyEdges();
-    const visited = new Set<string>();
-    const stack: string[] = [block.id];
-
-    while (stack.length > 0) {
-      const current = stack.pop() as string;
-      if (visited.has(current)) continue;
-      visited.add(current);
-      const neighbors = edges.get(current);
-      if (neighbors) {
-        for (const neighbor of neighbors) {
-          stack.push(neighbor);
-        }
-      }
-    }
-
-    visited.delete(block.id);
-    return visited;
-  }
-
-  async function handleStartingMrrModeChange(
-    mode: NumericInputMode
-  ): Promise<void> {
-    const previousMode = startingMrrMode;
-    setStartingMrrMode(mode);
-
-    const result = await runWithRecalculation(() =>
-      updateBlockDependencyMutation({
-        blockId: block.id,
-        field: "startingMrr",
-        mode,
-        referenceId: startingMrrReferenceId || undefined,
-      })
-    );
-
-    if (!result.ok) {
-      setStartingMrrMode(previousMode);
-      showToast(result.error);
-      return;
-    }
-
-    onUpdated(result.block);
-  }
-
-  async function handleStartingMrrReferenceChange(
-    referenceId: string
-  ): Promise<void> {
-    const previousReferenceId = startingMrrReferenceId;
-    setStartingMrrReferenceId(referenceId);
-
-    const result = await runWithRecalculation(() =>
-      updateBlockDependencyMutation({
-        blockId: block.id,
-        field: "startingMrr",
-        mode: "Referenced",
-        referenceId: referenceId || undefined,
-      })
-    );
-
-    if (!result.ok) {
-      setStartingMrrReferenceId(previousReferenceId);
-      showToast(result.error);
-      return;
-    }
-
-    onUpdated(result.block);
   }
 
   return (
@@ -748,17 +771,17 @@ function BlockCard({
               <div className="flex flex-col gap-1">
                 <label
                   className="text-sm font-medium"
-                  htmlFor={`${block.id}-startingMrr-mode`}
+                  htmlFor={`${block.id}-newCustomers-mode`}
                 >
-                  Starting MRR input mode
+                  New customers (source)
                 </label>
                 <select
-                  id={`${block.id}-startingMrr-mode`}
-                  name="startingMrrMode"
+                  id={`${block.id}-newCustomers-mode`}
+                  name="newCustomersMode"
                   className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  value={startingMrrMode}
+                  value={newCustomersMode}
                   onChange={(event) =>
-                    void handleStartingMrrModeChange(
+                    void handleNewCustomersModeChange(
                       event.target.value as NumericInputMode
                     )
                   }
@@ -766,26 +789,46 @@ function BlockCard({
                 >
                   <option value="Static">Static</option>
                   <option value="Referenced">Referenced</option>
-                  <option value="Formula">Formula</option>
                 </select>
               </div>
-              {startingMrrMode === "Referenced" && (
+              {newCustomersMode === "Static" && (
                 <div className="flex flex-col gap-1">
                   <label
                     className="text-sm font-medium"
-                    htmlFor={`${block.id}-startingMrr-reference`}
+                    htmlFor={`${block.id}-newCustomersStatic`}
+                  >
+                    New customers per month
+                  </label>
+                  <Input
+                    id={`${block.id}-newCustomersStatic`}
+                    name="newCustomersStatic"
+                    type="number"
+                    className="tabular-nums"
+                    value={formState.newCustomersStatic ?? ""}
+                    onChange={(event) =>
+                      handleChange("newCustomersStatic", event.target.value)
+                    }
+                    disabled={isUpdating}
+                    min={0}
+                    step="any"
+                  />
+                </div>
+              )}
+              {newCustomersMode === "Referenced" && (
+                <div className="flex flex-col gap-1">
+                  <label
+                    className="text-sm font-medium"
+                    htmlFor={`${block.id}-newCustomers-reference`}
                   >
                     Reference block
                   </label>
                   <select
-                    id={`${block.id}-startingMrr-reference`}
-                    name="startingMrrReference"
+                    id={`${block.id}-newCustomers-reference`}
+                    name="newCustomersReference"
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    value={startingMrrReferenceId}
+                    value={newCustomersReferenceId}
                     onChange={(event) =>
-                      void handleStartingMrrReferenceChange(
-                        event.target.value
-                      )
+                      void handleNewCustomersReferenceChange(event.target.value)
                     }
                     disabled={isUpdating}
                   >
@@ -852,6 +895,29 @@ function BlockCard({
                   min={0}
                   max={1}
                   step="any"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-sm font-medium"
+                  htmlFor={`${block.id}-monthlyMrrGrowthPercent`}
+                >
+                  Monthly MRR growth %
+                </label>
+                <Input
+                  id={`${block.id}-monthlyMrrGrowthPercent`}
+                  name="monthlyMrrGrowthPercent"
+                  type="number"
+                  className="tabular-nums"
+                  value={formState.monthlyMrrGrowthPercent ?? ""}
+                  onChange={(event) =>
+                    handleChange("monthlyMrrGrowthPercent", event.target.value)
+                  }
+                  disabled={isUpdating}
+                  min={0}
+                  max={1}
+                  step="any"
+                  placeholder="e.g. 0.05 for 5%"
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -1143,31 +1209,28 @@ function BlockCard({
             )}
             {block.type === "Revenue" && (
               <div className="flex flex-col gap-2">
+                <ReadOnlyRow label="Starting MRR" value={formState.startingMrr} />
                 <ReadOnlyRow
-                  label="Starting MRR"
+                  label="New customers (source)"
                   value={
-                    startingMrrMode === "Referenced" && startingMrrReferenceId
-                      ? `From ${allBlocks.find((b) => b.id === startingMrrReferenceId)?.title ?? "block"}`
-                      : formState.startingMrr
+                    newCustomersMode === "Referenced" && newCustomersReferenceId
+                      ? `From ${allBlocks.find((b) => b.id === newCustomersReferenceId)?.title ?? "block"}`
+                      : formState.newCustomersStatic
                   }
                 />
-                <ReadOnlyRow
-                  label="Starting MRR input mode"
-                  value={startingMrrMode}
-                />
-                {startingMrrMode === "Referenced" && startingMrrReferenceId && (
-                  <ReadOnlyRow
-                    label="Reference block"
-                    value={
-                      allBlocks.find((b) => b.id === startingMrrReferenceId)
-                        ?.title ?? "—"
-                    }
-                  />
-                )}
                 <ReadOnlyRow label="ARPA" value={formState.arpa} />
                 <ReadOnlyRow
                   label="Monthly churn %"
                   value={formState.monthlyChurnPercent}
+                />
+                <ReadOnlyRow
+                  label="Monthly MRR growth %"
+                  value={
+                    formState.monthlyMrrGrowthPercent !== undefined &&
+                    formState.monthlyMrrGrowthPercent !== ""
+                      ? formState.monthlyMrrGrowthPercent
+                      : "—"
+                  }
                 />
                 <ReadOnlyRow
                   label="Billing frequency"
