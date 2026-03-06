@@ -37,7 +37,8 @@ Plaintext
 app/  
 ├── (auth)/  
 │   ├── login/page.tsx  
-│   └── register/page.tsx  
+│   ├── signup/page.tsx  
+│   └── forgot-password/page.tsx  
 ├── (app)/  
 │   ├── layout.tsx                     \# Injects UserContextDTO, persistent sidebar \[cite: 138, 255\]  
 │   └── workspace/\[workspaceId\]/  
@@ -334,13 +335,13 @@ This view handles the highest-stakes mutation in the application.
 
 ### **1\. UX Mental Model & Journey**
 
-The authentication flow **MUST** be a frictionless, high-conversion entry point. Because V1 strictly targets single-user accounts (no multi-seat/enterprise features), the mental model is a direct 1:1 relationship between the user and their workspace. Upon successful login or registration, the system bypasses complex tenant-switching and routes the user directly into their default Workspace and active Scenario.
+The authentication flow **MUST** be a frictionless, high-conversion entry point. Because V1 strictly targets single-user accounts (no multi-seat/enterprise features), the mental model is a direct 1:1 relationship between the user and their workspace. Upon successful login or sign-up, the system bypasses complex tenant-switching and routes the user directly into their default Workspace and active Scenario.
 
 The Global Navigation Shell (Sidebar) serves as the persistent anchor for the application. It visually reinforces the three primary phases of the P3 workflow: 1\. Build (Canvas), 2\. Triage (Import), 3\. Review (Dashboard & Actuals).
 
 ### **2\. Route & Component Tree**
 
-**Routes:** \* (auth)/login/page.tsx & (auth)/register/page.tsx
+**Routes:** (auth)/login/page.tsx, (auth)/signup/page.tsx, (auth)/forgot-password/page.tsx
 
 * (app)/layout.tsx (Injects the Global Navigation)
 
@@ -349,7 +350,7 @@ The DOM structure relies on standard Shadcn form primitives and a responsive lay
 * AuthLayout (Centered flex container, bg-muted background)  
   * AuthCard (Shadcn Card)  
     * AuthHeader (Logo and Title)  
-    * LoginForm OR RegisterForm (Shadcn Form)  
+    * LoginForm, SignUpForm, or ForgotPasswordForm (Shadcn Form)  
       * EmailInput \<- Mapped to \-\> UserDTO.email  
       * PasswordInput \<- Mapped to \-\> (Internal auth handler)  
       * SubmitButton (Shadcn Button)  
@@ -369,9 +370,9 @@ The DOM structure relies on standard Shadcn form primitives and a responsive lay
 
 Authentication state **MUST** be handled via secure HTTP-only cookies managed by the Next.js server, not local storage or global client state.
 
-* **Action:** Submit Login / Registration  
-  * **Trigger:** Click "Sign In" or "Create Account".  
-  * **Server Action:** loginMutation or registerMutation  
+* **Action:** Submit Login / Sign-up  
+  * **Trigger:** Click "Sign In" or "Create Account" (or "Send reset link" on forgot-password).  
+  * **Server Action:** loginAction, signUpAction, or forgotPasswordAction  
   * **Zod Schema:** AuthCredentialsSchema (Validates email format and strict password strength).  
   * **Post-Mutation:** Server sets secure session cookie and triggers redirect('/workspace/\[defaultWorkspaceId\]').  
 * **Action:** Logout  
@@ -384,15 +385,15 @@ Authentication state **MUST** be handled via secure HTTP-only cookies managed by
 ### **4\. Finite State Machine (FSM)**
 
 * **Loading (Auth Submit):** The SubmitButton **MUST** disable and display a Shadcn Spinner inline with the button text to prevent duplicate submissions.  
-* **Error (Invalid Credentials):** If the loginMutation fails, the Server Action returns an error object. The UI **MUST** display this via a Shadcn Alert (Destructive) positioned at the top of the AuthCard, pushing the form down. Inline field errors (e.g., "Invalid email format") **MUST** be handled synchronously by Zod resolver before hitting the server.  
-* **Empty State (Workspace Initialization):** If a user registers but the backend fails to provision the default organizations row, the AppLayout **MUST** intercept the missing OrganizationDTO and display a full-screen blocking Card prompting the user to "Name your Workspace" via a createWorkspaceMutation.
+* **Error (Invalid Credentials):** If the loginAction fails, the Server Action returns an error object. The UI **MUST** display this via a Shadcn Alert (Destructive) positioned at the top of the AuthCard, pushing the form down. Inline field errors (e.g., "Invalid email format") **MUST** be handled synchronously by Zod resolver before hitting the server.  
+* **Empty State (Workspace Initialization):** If a user signs up but the backend fails to provision the default organizations row, the AppLayout **MUST** intercept the missing OrganizationDTO and display a full-screen blocking Card prompting the user to "Name your Workspace" via a createWorkspaceMutation.
 
 ### **5\. Microcopy Table**
 
 | UI Element | Component Type | Exact Copy |
 | :---- | :---- | :---- |
 | Login Heading | CardTitle | "Welcome back to P3" |
-| Registration Heading | CardTitle | "Start Modeling Your Runway" |
+| Sign-up Heading | CardTitle | "Start Modeling Your Runway" |
 | Email Label | FormLabel | "Work Email" |
 | Auth Error Banner | Alert (Destructive) | "Invalid email or password. Please try again." |
 | Sidebar: Build Phase | NavLabel (Muted) | "MODELING" |

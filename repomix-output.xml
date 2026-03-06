@@ -1,0 +1,3741 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: .next/, node_modules/, package-lock.json, yarn.lock, pnpm-lock.yaml
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+app/
+  (auth)/
+    forgot-password/
+      page.tsx
+    login/
+      page.tsx
+    signup/
+      page.tsx
+    actions.ts
+    forgot-password-form.tsx
+    layout.tsx
+    login-form.tsx
+    signup-form.tsx
+  (dashboard)/
+    actuals/
+      page.tsx
+    airlock/
+      page.tsx
+    assets/
+      page.tsx
+    canvas/
+      page.tsx
+    dashboard/
+      page.tsx
+    governance/
+      page.tsx
+    import/
+      page.tsx
+    settings/
+      page.tsx
+    vault/
+      page.tsx
+    layout.tsx
+  (guest)/
+    guest/
+      view/
+        page.tsx
+    layout.tsx
+  favicon.ico
+  globals.css
+  layout.tsx
+  page.tsx
+components/
+  ui/
+    button.tsx
+    card.tsx
+    input.tsx
+    sidebar.tsx
+  auth-provider.tsx
+docs/
+  API_CONTRACT.md
+  ARCHITECTURE.md
+  DOMAIN_MODEL.md
+  FUNCTIONAL_SPEC.md
+  UX_SPEC.md
+lib/
+  utils.ts
+public/
+  file.svg
+  globe.svg
+  next.svg
+  vercel.svg
+  window.svg
+src/
+  lib/
+    supabase/
+      client.ts
+      server.ts
+  middleware.ts
+test/
+  verify_phase1_docs.mjs
+  verify_task_1_1.mjs
+  verify_task_1_1.ts
+  verify_task_1_2.mjs
+  verify_task_1_2.ts
+.ai-status.md
+.gitignore
+.prettierrc
+components.json
+eslint.config.mjs
+next.config.ts
+package.json
+postcss.config.mjs
+README.md
+repomix.config.json
+tsconfig.json
+verify_design_system.mjs
+verify_repomix_config.mjs
+verify_routing.mjs
+verify_scaffold.mjs
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="app/(auth)/forgot-password/page.tsx">
+import { ForgotPasswordForm } from "../forgot-password-form";
+
+export default function ForgotPasswordPage() {
+  return <ForgotPasswordForm />;
+}
+</file>
+
+<file path="app/(auth)/forgot-password-form.tsx">
+"use client";
+
+import { useActionState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { forgotPasswordAction, type ActionResult } from "./actions";
+
+export function ForgotPasswordForm() {
+  const [state, formAction] = useActionState(forgotPasswordAction, null as ActionResult | null);
+
+  return (
+    <div className="w-full max-w-sm space-y-6 rounded-lg border border-border bg-white p-6 shadow-sm">
+      <h1 className="text-xl font-semibold tracking-tight">Forgot password</h1>
+      {state?.success ? (
+        <p className="text-sm text-muted-foreground">
+          If an account exists for that email, we&apos;ve sent a reset link.
+        </p>
+      ) : (
+        <form action={formAction} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium">
+              Email
+            </label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              required
+              autoComplete="email"
+              className="w-full"
+            />
+          </div>
+          {state?.error && (
+            <p className="text-sm text-destructive" role="alert">
+              {state.error}
+            </p>
+          )}
+          <Button type="submit" className="w-full">
+            Send reset link
+          </Button>
+        </form>
+      )}
+      <p className="text-center text-sm">
+        <Link href="/login" className="text-muted-foreground underline-offset-4 hover:underline">
+          Back to log in
+        </Link>
+      </p>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/actuals/page.tsx">
+export default function MonthCloseHistoryPage() {
+  return <h1>Month Close & History</h1>;
+}
+</file>
+
+<file path="app/(dashboard)/airlock/page.tsx">
+export default function AirlockPage() {
+  return <h1>Airlock</h1>;
+}
+</file>
+
+<file path="app/(dashboard)/assets/page.tsx">
+export default function AssetsPage() {
+  return <h1>Assets</h1>;
+}
+</file>
+
+<file path="app/(dashboard)/canvas/page.tsx">
+export default function ProjectionCanvasPage() {
+  return <h1>Projection Canvas</h1>;
+}
+</file>
+
+<file path="app/(dashboard)/governance/page.tsx">
+export default function GovernancePage() {
+  return <h1>Governance</h1>;
+}
+</file>
+
+<file path="app/(dashboard)/import/page.tsx">
+export default function ImportCsvPage() {
+  return <h1>Import Bank CSV</h1>;
+}
+</file>
+
+<file path="app/(dashboard)/settings/page.tsx">
+export default function SettingsPage() {
+  return <h1>Settings</h1>;
+}
+</file>
+
+<file path="app/(dashboard)/vault/page.tsx">
+export default function VaultPage() {
+  return <h1>Vault</h1>;
+}
+</file>
+
+<file path="app/(guest)/guest/view/page.tsx">
+export default function GuestViewPage() {
+  return <h1>Guest View</h1>;
+}
+</file>
+
+<file path="app/(guest)/layout.tsx">
+export default function GuestLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return <>{children}</>;
+}
+</file>
+
+<file path="components/ui/button.tsx">
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { Slot } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
+        outline:
+          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9",
+        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm": "size-8",
+        "icon-lg": "size-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }) {
+  const Comp = asChild ? Slot.Root : "button"
+
+  return (
+    <Comp
+      data-slot="button"
+      data-variant={variant}
+      data-size={size}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, buttonVariants }
+</file>
+
+<file path="components/ui/card.tsx">
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Card({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card"
+      className={cn(
+        "flex flex-col gap-6 rounded-xl border bg-card py-6 text-card-foreground shadow-sm",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-header"
+      className={cn(
+        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-2 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn("leading-none font-semibold", className)}
+      {...props}
+    />
+  )
+}
+
+function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
+
+function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn(
+        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("px-6", className)}
+      {...props}
+    />
+  )
+}
+
+function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
+      {...props}
+    />
+  )
+}
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+}
+</file>
+
+<file path="components/ui/input.tsx">
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30",
+        "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Input }
+</file>
+
+<file path="components/auth-provider.tsx">
+"use client";
+
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
+
+type AuthContextValue = {
+  session: Session | null;
+  isLoading: boolean;
+};
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
+      setIsLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  return (
+    <AuthContext.Provider value={{ session, isLoading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (ctx === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return ctx;
+}
+</file>
+
+<file path="docs/API_CONTRACT.md">
+# API Contract
+
+<!-- Paste your API contract specification from your offline document below this line -->
+</file>
+
+<file path="lib/utils.ts">
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+</file>
+
+<file path="public/file.svg">
+<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+</file>
+
+<file path="public/globe.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+</file>
+
+<file path="public/next.svg">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+</file>
+
+<file path="public/vercel.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+</file>
+
+<file path="public/window.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+</file>
+
+<file path="src/lib/supabase/client.ts">
+import { createBrowserClient } from "@supabase/ssr";
+
+export function createClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    return createBrowserClient(
+      "https://placeholder.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder"
+    );
+  }
+  return createBrowserClient(url, key);
+}
+</file>
+
+<file path="src/lib/supabase/server.ts">
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+export async function createClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+}
+</file>
+
+<file path="test/verify_phase1_docs.mjs">
+#!/usr/bin/env node
+/**
+ * Task 1.99 — Phase 1 documentation verification.
+ * Positive: .ai-status.md contains Phase 1 completion marker and populated CURRENT_ARCHITECTURE_SNAPSHOT.
+ * Negative: ARCHITECTURE.md has NOT lost future phase sections (e.g. Phase 2).
+ */
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(__dirname, "..");
+
+const results = [];
+
+function pass(label, detail = "") {
+  results.push({ ok: true, label, detail });
+  console.log(`  ✓ PASS: ${label}${detail ? ` (${detail})` : ""}`);
+}
+
+function fail(label, detail = "") {
+  results.push({ ok: false, label, detail });
+  console.log(`  ✗ FAIL: ${label}${detail ? ` — ${detail}` : ""}`);
+}
+
+const aiStatusPath = path.join(projectRoot, ".ai-status.md");
+const architecturePath = path.join(projectRoot, "docs", "ARCHITECTURE.md");
+
+console.log("\n[1] .ai-status.md — Phase 1 completion marker");
+
+const aiStatus = fs.existsSync(aiStatusPath)
+  ? fs.readFileSync(aiStatusPath, "utf8")
+  : "";
+
+if (!aiStatus) {
+  fail(".ai-status.md exists and readable", "file missing or empty");
+} else {
+  pass(".ai-status.md exists and readable", "file found");
+  const hasPhase1Complete =
+    /Phase\s+1\s*:\s*COMPLETE/i.test(aiStatus) ||
+    /Phase\s+1\s+complete/i.test(aiStatus) ||
+    /Phase\s+1\s*—\s*COMPLETE/i.test(aiStatus);
+  if (hasPhase1Complete) {
+    pass(".ai-status.md contains Phase 1 completion marker", "Phase 1: COMPLETE or equivalent");
+  } else {
+    fail(
+      ".ai-status.md contains Phase 1 completion marker",
+      "must contain 'Phase 1: COMPLETE' or equivalent"
+    );
+  }
+
+  const snapshotMatch = aiStatus.match(
+    /##\s*CURRENT_ARCHITECTURE_SNAPSHOT\s*([\s\S]*?)(?=##\s|$)/i
+  );
+  const snapshotContent = snapshotMatch ? snapshotMatch[1].trim() : "";
+  const snapshotPopulated =
+    snapshotContent.length > 80 &&
+    (snapshotContent.includes("app/") ||
+      snapshotContent.includes("dashboard") ||
+      snapshotContent.includes("auth") ||
+      snapshotContent.includes("route"));
+  if (snapshotMatch && snapshotPopulated) {
+    pass(
+      ".ai-status.md has populated CURRENT_ARCHITECTURE_SNAPSHOT",
+      "section present with substantive content"
+    );
+  } else if (!snapshotMatch) {
+    fail(
+      ".ai-status.md has populated CURRENT_ARCHITECTURE_SNAPSHOT",
+      "section CURRENT_ARCHITECTURE_SNAPSHOT not found"
+    );
+  } else {
+    fail(
+      ".ai-status.md has populated CURRENT_ARCHITECTURE_SNAPSHOT",
+      "section exists but content too short or not descriptive"
+    );
+  }
+}
+
+console.log("\n[2] docs/ARCHITECTURE.md — Future phases preserved");
+
+const architecture = fs.existsSync(architecturePath)
+  ? fs.readFileSync(architecturePath, "utf8")
+  : "";
+
+if (!architecture) {
+  fail("ARCHITECTURE.md exists and readable", "file missing or empty");
+} else {
+  pass("ARCHITECTURE.md exists and readable", "file found");
+  const hasFuturePhases =
+    /Phase\s+2/i.test(architecture) || /future\s+phase/i.test(architecture);
+  if (hasFuturePhases) {
+    pass(
+      "ARCHITECTURE.md has NOT lost future phase sections",
+      "Phase 2 or future phases referenced"
+    );
+  } else {
+    fail(
+      "ARCHITECTURE.md has NOT lost future phase sections",
+      "must retain sections detailing Phase 2 or future phases"
+    );
+  }
+}
+
+const failed = results.filter((r) => !r.ok);
+const passed = results.filter((r) => r.ok);
+console.log("\n--- Summary ---");
+console.log(`Passed: ${passed.length}, Failed: ${failed.length}`);
+if (failed.length > 0) {
+  console.log("\nFailed assertions:");
+  failed.forEach((r) =>
+    console.log(`  - ${r.label}${r.detail ? `: ${r.detail}` : ""}`)
+  );
+  process.exit(1);
+}
+console.log("All Phase 1 documentation checks passed.\n");
+process.exit(0);
+</file>
+
+<file path="test/verify_task_1_1.mjs">
+#!/usr/bin/env node
+/**
+ * Task 1.1 — Layout shell & navigation verification (TDD Lite).
+ * Asserts (auth) layout has centered flex, (dashboard) layout has Sidebar with
+ * Links to dashboard routes and a Logout placeholder. Uses app/ or src/app/.
+ */
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(__dirname, "..");
+
+const results = [];
+
+function pass(label, detail = "") {
+  results.push({ ok: true, label, detail });
+  console.log(`  ✓ PASS: ${label}${detail ? ` (${detail})` : ""}`);
+}
+
+function fail(label, detail = "") {
+  results.push({ ok: false, label, detail });
+  console.log(`  ✗ FAIL: ${label}${detail ? ` — ${detail}` : ""}`);
+}
+
+function readFileSafe(filePath) {
+  try {
+    return fs.readFileSync(filePath, "utf8");
+  } catch (e) {
+    if (e.code === "ENOENT") return null;
+    throw e;
+  }
+}
+
+function fileExists(filePath) {
+  try {
+    return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+const appBase = fileExists(path.join(projectRoot, "src", "app", "layout.tsx"))
+  ? path.join(projectRoot, "src", "app")
+  : path.join(projectRoot, "app");
+
+const authLayoutPath = path.join(appBase, "(auth)", "layout.tsx");
+const dashboardLayoutPath = path.join(appBase, "(dashboard)", "layout.tsx");
+
+const requiredDashboardLinks = [
+  "/dashboard",
+  "/assets",
+  "/airlock",
+  "/vault",
+  "/governance",
+  "/settings",
+];
+
+console.log("\n[1] Auth layout — (auth)/layout.tsx");
+
+const authContent = readFileSafe(authLayoutPath);
+if (!authContent) {
+  fail("Auth layout exists", `not found at ${authLayoutPath}`);
+} else {
+  pass("Auth layout exists", "file found");
+  if (/export\s+default\s+function/.test(authContent)) {
+    pass("Auth layout default export", "present");
+  } else {
+    fail("Auth layout default export", "must export default function");
+  }
+  if (/items-center/.test(authContent)) {
+    pass("Auth layout: items-center", "present");
+  } else {
+    fail("Auth layout: items-center", "centered flex utility required");
+  }
+  if (/justify-center/.test(authContent)) {
+    pass("Auth layout: justify-center", "present");
+  } else {
+    fail("Auth layout: justify-center", "centered flex utility required");
+  }
+  if (/h-screen/.test(authContent)) {
+    pass("Auth layout: h-screen", "present");
+  } else {
+    fail("Auth layout: h-screen", "full-height utility required");
+  }
+  if (/children/.test(authContent)) {
+    pass("Auth layout renders children", "present");
+  } else {
+    fail("Auth layout renders children", "must render children prop");
+  }
+}
+
+console.log("\n[2] Dashboard layout — (dashboard)/layout.tsx");
+
+const dashboardContent = readFileSafe(dashboardLayoutPath);
+if (!dashboardContent) {
+  fail("Dashboard layout exists", `not found at ${dashboardLayoutPath}`);
+} else {
+  pass("Dashboard layout exists", "file found");
+  if (/export\s+default\s+function/.test(dashboardContent)) {
+    pass("Dashboard layout default export", "present");
+  } else {
+    fail("Dashboard layout default export", "must export default function");
+  }
+  const hasSidebar =
+    /Sidebar|sidebar|<\s*nav|sidebar/i.test(dashboardContent) ||
+    (fileExists(path.join(projectRoot, "components", "ui", "sidebar.tsx")) &&
+      /sidebar|Sidebar/.test(dashboardContent));
+  if (hasSidebar) {
+    pass("Dashboard layout includes Sidebar", "structural sidebar present");
+  } else {
+    fail(
+      "Dashboard layout includes Sidebar",
+      "must include Sidebar (native or imported component)"
+    );
+  }
+  const sidebarPath = path.join(projectRoot, "components", "ui", "sidebar.tsx");
+  const sidebarContent = readFileSafe(sidebarPath);
+  for (const href of requiredDashboardLinks) {
+    const linkRegex = new RegExp(
+      `<Link[^>]*href\\s*=\\s*["'\`]${href.replace("/", "\\/")}["'\`]|href\\s*=\\s*["'\`]${href.replace("/", "\\/")}["'\`]`
+    );
+    const hasPathLiteral = (content) =>
+      content && (content.includes(`"${href}"`) || content.includes(`'${href}'`));
+    const hasLinkInFile = (content) =>
+      content && (linkRegex.test(content) || (content.includes("<Link") && hasPathLiteral(content)));
+    if (hasLinkInFile(dashboardContent)) {
+      pass(`Sidebar Link: ${href}`, "present");
+    } else if (hasLinkInFile(sidebarContent)) {
+      pass(`Sidebar Link: ${href}`, "present (in sidebar component)");
+    } else {
+      fail(`Sidebar Link: ${href}`, "missing");
+    }
+  }
+  const hasLogout =
+    /logout|Logout|log out|Log out/i.test(dashboardContent);
+  const contentForLogout = sidebarContent || dashboardContent;
+  if (hasLogout || (contentForLogout && /logout|Logout|log out|Log out/i.test(contentForLogout))) {
+    pass("Sidebar contains Logout placeholder", "present");
+  } else {
+    fail("Sidebar contains Logout placeholder", "string/button required");
+  }
+  if (/children/.test(dashboardContent)) {
+    pass("Dashboard layout renders children", "present");
+  } else {
+    fail("Dashboard layout renders children", "must render children prop");
+  }
+}
+
+const failed = results.filter((r) => !r.ok);
+const passed = results.filter((r) => r.ok);
+console.log("\n--- Summary ---");
+console.log(`Passed: ${passed.length}, Failed: ${failed.length}`);
+if (failed.length > 0) {
+  console.log("\nFailed assertions:");
+  failed.forEach((r) =>
+    console.log(`  - ${r.label}${r.detail ? `: ${r.detail}` : ""}`)
+  );
+  process.exit(1);
+}
+console.log("All Task 1.1 layout & navigation checks passed.\n");
+process.exit(0);
+</file>
+
+<file path="test/verify_task_1_1.ts">
+/**
+ * Task 1.1 — Layout shell & navigation verification (TDD Lite).
+ * Runnable equivalent: test/verify_task_1_1.mjs (run with: node test/verify_task_1_1.mjs)
+ *
+ * Asserts:
+ * - (auth)/layout.tsx: default export, items-center, justify-center, h-screen, renders children
+ * - (dashboard)/layout.tsx: default export, Sidebar with Links to /dashboard, /assets, /airlock,
+ *   /vault, /governance, /settings, and Logout placeholder; renders children.
+ */
+
+// This file documents the verification contract. Execute test/verify_task_1_1.mjs for assertions.
+
+export const TASK_1_1_REQUIREMENTS = {
+  authLayout: {
+    flexCentered: ["items-center", "justify-center", "h-screen"],
+    rendersChildren: true,
+  },
+  dashboardLayout: {
+    hasSidebar: true,
+    links: ["/dashboard", "/assets", "/airlock", "/vault", "/governance", "/settings"],
+    hasLogoutPlaceholder: true,
+    rendersChildren: true,
+  },
+} as const;
+</file>
+
+<file path="test/verify_task_1_2.mjs">
+#!/usr/bin/env node
+/**
+ * Task 1.2 — Supabase clients, middleware route protection, auth UI (TDD Lite).
+ * Asserts: lib/supabase server + client, middleware protecting /dashboard and /settings,
+ * and Login, Sign Up, Forgot Password UI in (auth). Uses src/ or project root.
+ */
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(__dirname, "..");
+
+const results = [];
+
+function pass(label, detail = "") {
+  results.push({ ok: true, label, detail });
+  console.log(`  ✓ PASS: ${label}${detail ? ` (${detail})` : ""}`);
+}
+
+function fail(label, detail = "") {
+  results.push({ ok: false, label, detail });
+  console.log(`  ✗ FAIL: ${label}${detail ? ` — ${detail}` : ""}`);
+}
+
+function readFileSafe(filePath) {
+  try {
+    return fs.readFileSync(filePath, "utf8");
+  } catch (e) {
+    if (e.code === "ENOENT") return null;
+    throw e;
+  }
+}
+
+function fileExists(filePath) {
+  try {
+    return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+const hasSrc = fileExists(path.join(projectRoot, "src", "app", "layout.tsx")) || fs.existsSync(path.join(projectRoot, "src"));
+const base = hasSrc ? path.join(projectRoot, "src") : projectRoot;
+const appBase = hasSrc ? path.join(projectRoot, "src", "app") : path.join(projectRoot, "app");
+
+console.log("\n[1] Supabase clients");
+
+const serverPath = path.join(base, "lib", "supabase", "server.ts");
+const clientPath = path.join(base, "lib", "supabase", "client.ts");
+
+if (fileExists(serverPath)) {
+  pass("lib/supabase/server.ts exists", serverPath.replace(projectRoot, "").replace(/^\//, "") || "lib/supabase/server.ts");
+} else {
+  fail("lib/supabase/server.ts exists", "not found");
+}
+
+if (fileExists(clientPath)) {
+  pass("lib/supabase/client.ts exists", clientPath.replace(projectRoot, "").replace(/^\//, "") || "lib/supabase/client.ts");
+} else {
+  fail("lib/supabase/client.ts exists", "not found");
+}
+
+console.log("\n[2] Next.js middleware (route protection)");
+
+const middlewarePathRoot = path.join(projectRoot, "middleware.ts");
+const middlewarePathSrc = path.join(projectRoot, "src", "middleware.ts");
+const middlewarePath = fileExists(middlewarePathSrc) ? middlewarePathSrc : fileExists(middlewarePathRoot) ? middlewarePathRoot : null;
+
+if (!middlewarePath) {
+  fail("middleware.ts exists", "not found at src/middleware.ts or project root");
+} else {
+  pass("middleware.ts exists", middlewarePath.replace(projectRoot, "").replace(/^\//, ""));
+  const content = readFileSafe(middlewarePath);
+  const protectsDashboard = content && (/\/dashboard/.test(content) || /dashboard/.test(content));
+  const protectsSettings = content && (/\/settings/.test(content) || /settings/.test(content));
+  if (protectsDashboard) {
+    pass("Middleware protects /dashboard", "configured");
+  } else {
+    fail("Middleware protects /dashboard", "not configured");
+  }
+  if (protectsSettings) {
+    pass("Middleware protects /settings", "configured");
+  } else {
+    fail("Middleware protects /settings", "not configured");
+  }
+}
+
+console.log("\n[3] Auth UI components (Login, Sign Up, Forgot Password)");
+
+const authBases = [
+  path.join(appBase, "(auth)"),
+  path.join(projectRoot, "app", "(auth)"),
+];
+function findAuthPage(name) {
+  for (const authBase of authBases) {
+    const p = path.join(authBase, name, "page.tsx");
+    if (fileExists(p)) return true;
+  }
+  return false;
+}
+
+if (findAuthPage("login")) {
+  pass("Login UI exists in (auth)", "login/page.tsx");
+} else {
+  fail("Login UI exists in (auth)", "login/page.tsx not found");
+}
+
+if (findAuthPage("signup")) {
+  pass("Sign Up UI exists in (auth)", "signup/page.tsx");
+} else {
+  fail("Sign Up UI exists in (auth)", "signup/page.tsx not found");
+}
+
+if (findAuthPage("forgot-password")) {
+  pass("Forgot Password UI exists in (auth)", "forgot-password/page.tsx");
+} else {
+  fail("Forgot Password UI exists in (auth)", "forgot-password/page.tsx not found");
+}
+
+const failed = results.filter((r) => !r.ok);
+const passed = results.filter((r) => r.ok);
+console.log("\n--- Summary ---");
+console.log(`Passed: ${passed.length}, Failed: ${failed.length}`);
+if (failed.length > 0) {
+  console.log("\nFailed assertions:");
+  failed.forEach((r) =>
+    console.log(`  - ${r.label}${r.detail ? `: ${r.detail}` : ""}`)
+  );
+  process.exit(1);
+}
+console.log("All Task 1.2 Supabase & auth checks passed.\n");
+process.exit(0);
+</file>
+
+<file path="test/verify_task_1_2.ts">
+/**
+ * Task 1.2 — Supabase clients, middleware, auth UI verification (TDD Lite).
+ * Runnable equivalent: test/verify_task_1_2.mjs (run with: node test/verify_task_1_2.mjs)
+ *
+ * Asserts:
+ * - lib/supabase/server.ts and lib/supabase/client.ts exist
+ * - Next.js middleware.ts at src/ root (or project root) protects /dashboard and /settings
+ * - Login, Sign Up, and Forgot Password UI exist in app/(auth) (login, signup, forgot-password pages/components)
+ */
+
+export const TASK_1_2_REQUIREMENTS = {
+  supabase: {
+    server: "lib/supabase/server.ts",
+    client: "lib/supabase/client.ts",
+  },
+  middleware: {
+    path: "src/middleware.ts or middleware.ts",
+    protectedRoutes: ["/dashboard", "/settings"],
+  },
+  authUi: {
+    login: "(auth)/login (page or component)",
+    signUp: "(auth)/signup (page or component)",
+    forgotPassword: "(auth)/forgot-password (page or component)",
+  },
+} as const;
+</file>
+
+<file path=".gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+</file>
+
+<file path=".prettierrc">
+{
+  "semi": true,
+  "singleQuote": false,
+  "tabWidth": 2,
+  "trailingComma": "es5"
+}
+</file>
+
+<file path="components.json">
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "rtl": false,
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "registries": {}
+}
+</file>
+
+<file path="eslint.config.mjs">
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+import eslintConfigPrettier from "eslint-config-prettier";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  eslintConfigPrettier,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+</file>
+
+<file path="next.config.ts">
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;
+</file>
+
+<file path="postcss.config.mjs">
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+</file>
+
+<file path="README.md">
+# p3
+</file>
+
+<file path="repomix.config.json">
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      ".next/",
+      "node_modules/",
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml"
+    ]
+  },
+  "output": {
+    "topFiles": [".ai-status.md", "docs/"]
+  }
+}
+</file>
+
+<file path="verify_design_system.mjs">
+#!/usr/bin/env node
+/**
+ * Design system verification script (TDD Lite).
+ * Asserts Tailwind/Shadcn design tokens and required base components.
+ * Uses only Node.js built-in fs — no extra npm packages.
+ */
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = __dirname;
+
+const results = [];
+
+function pass(label, detail = "") {
+  results.push({ ok: true, label, detail });
+  console.log(`  ✓ PASS: ${label}${detail ? ` (${detail})` : ""}`);
+}
+
+function fail(label, detail = "") {
+  results.push({ ok: false, label, detail });
+  console.log(`  ✗ FAIL: ${label}${detail ? ` — ${detail}` : ""}`);
+}
+
+function readFileSafe(filePath) {
+  try {
+    return fs.readFileSync(filePath, "utf8");
+  } catch (e) {
+    if (e.code === "ENOENT") return null;
+    throw e;
+  }
+}
+
+function fileExists(filePath) {
+  try {
+    return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+// --- Resolve paths ---
+const tailwindTs = path.join(projectRoot, "tailwind.config.ts");
+const tailwindJs = path.join(projectRoot, "tailwind.config.js");
+const globalsCssPaths = [
+  path.join(projectRoot, "app", "globals.css"),
+  path.join(projectRoot, "styles", "globals.css"),
+];
+const componentsDir = path.join(projectRoot, "components", "ui");
+const requiredComponents = ["button.tsx", "input.tsx", "card.tsx"];
+
+// --- 1. Tailwind config (optional: v4 uses CSS-only; if config file present, check tokens) ---
+console.log("\n[1] Tailwind config");
+let tailwindContent = readFileSafe(tailwindTs) ?? readFileSafe(tailwindJs);
+if (tailwindContent) {
+  if (/\bslate-50\b|\bzinc-50\b/.test(tailwindContent)) {
+    pass("Background token (slate-50 or zinc-50) in Tailwind config");
+  } else {
+    fail("Background token (slate-50 or zinc-50) in Tailwind config", "not found");
+  }
+  if (/\bwhite\b/.test(tailwindContent)) {
+    pass("Elevated background (white) in Tailwind config");
+  } else {
+    fail("Elevated background (white) in Tailwind config", "not found");
+  }
+  if (/\bslate-200\b/.test(tailwindContent)) {
+    pass("Border token (slate-200) in Tailwind config");
+  } else {
+    fail("Border token (slate-200) in Tailwind config", "not found");
+  }
+  if (/\bslate-900\b/.test(tailwindContent)) {
+    pass("Primary action (slate-900) in Tailwind config");
+  } else {
+    fail("Primary action (slate-900) in Tailwind config", "not found");
+  }
+  if (/\btabular-nums\b|tabularNums|"tabular-nums"/.test(tailwindContent)) {
+    pass("Typography: tabular-nums in Tailwind config");
+  } else {
+    fail("Typography: tabular-nums in Tailwind config", "not found");
+  }
+  if (/\bInter\b|\bGeist\b|geist/i.test(tailwindContent)) {
+    pass("Typography: Inter or Geist in Tailwind config");
+  } else {
+    fail("Typography: Inter or Geist in Tailwind config", "not found");
+  }
+} else {
+  // Tailwind v4: no config file; design tokens live in global CSS (checked in [2])
+  pass("Tailwind config", "Tailwind v4 CSS-only; tokens in global CSS");
+}
+
+// --- 2. Global CSS (required; check tokens) ---
+console.log("\n[2] Global CSS (design tokens)");
+const globalsPath = globalsCssPaths.find(fileExists);
+const cssContent = globalsPath ? readFileSafe(globalsPath) : null;
+
+if (!cssContent) {
+  fail("Global CSS file", "app/globals.css and styles/globals.css not found");
+} else {
+  if (/\bslate-50\b|\bzinc-50\b/.test(cssContent)) {
+    pass("Background token (slate-50 or zinc-50) in global CSS");
+  } else {
+    fail("Background token (slate-50 or zinc-50) in global CSS", "not found");
+  }
+  if (/\bwhite\b/.test(cssContent)) {
+    pass("Elevated background (white) in global CSS");
+  } else {
+    fail("Elevated background (white) in global CSS", "not found");
+  }
+  if (/\bslate-200\b/.test(cssContent)) {
+    pass("Border token (slate-200) in global CSS");
+  } else {
+    fail("Border token (slate-200) in global CSS", "not found");
+  }
+  if (/\bslate-900\b/.test(cssContent)) {
+    pass("Primary action (slate-900) in global CSS");
+  } else {
+    fail("Primary action (slate-900) in global CSS", "not found");
+  }
+  if (/\btabular-nums\b/.test(cssContent)) {
+    pass("Typography: tabular-nums in global CSS");
+  } else {
+    fail("Typography: tabular-nums in global CSS", "not found");
+  }
+  if (/\bInter\b|\bGeist\b|geist/i.test(cssContent)) {
+    pass("Typography: Inter or Geist in global CSS");
+  } else {
+    fail("Typography: Inter or Geist in global CSS", "not found");
+  }
+}
+
+// --- 3. Required base components ---
+console.log("\n[3] Required base components (components/ui/)");
+for (const name of requiredComponents) {
+  const filePath = path.join(componentsDir, name);
+  if (fileExists(filePath)) {
+    pass(`Component exists: ${name}`);
+  } else {
+    fail(`Component exists: ${name}`, `expected: ${filePath}`);
+  }
+}
+
+// --- Summary ---
+const failed = results.filter((r) => !r.ok);
+const passed = results.filter((r) => r.ok);
+console.log("\n--- Summary ---");
+console.log(`Passed: ${passed.length}, Failed: ${failed.length}`);
+if (failed.length > 0) {
+  console.log("\nFailed assertions:");
+  failed.forEach((r) => console.log(`  - ${r.label}${r.detail ? `: ${r.detail}` : ""}`));
+  process.exit(1);
+}
+console.log("All design system checks passed.\n");
+process.exit(0);
+</file>
+
+<file path="verify_repomix_config.mjs">
+#!/usr/bin/env node
+/**
+ * Repomix config verification script (TDD Lite).
+ * Asserts repomix.config.json exists, is valid JSON, and contains
+ * required ignore patterns and top-priority file/dir entries.
+ * Uses only Node.js built-in fs — no extra npm packages.
+ */
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = __dirname;
+const configPath = path.join(projectRoot, "repomix.config.json");
+const results = [];
+
+function pass(label, detail = "") {
+  results.push({ ok: true, label, detail });
+  console.log(`  ✓ PASS: ${label}${detail ? ` (${detail})` : ""}`);
+}
+
+function fail(label, detail = "") {
+  results.push({ ok: false, label, detail });
+  console.log(`  ✗ FAIL: ${label}${detail ? ` — ${detail}` : ""}`);
+}
+
+console.log("\n[1] repomix.config.json existence and validity");
+
+if (!fs.existsSync(configPath)) {
+  fail("Config file exists", "repomix.config.json not found in project root");
+  console.log("\n--- Summary ---\nPassed: 0, Failed: " + results.length + "\n");
+  process.exit(1);
+}
+pass("Config file exists", "repomix.config.json in root");
+
+let config;
+try {
+  const raw = fs.readFileSync(configPath, "utf8");
+  config = JSON.parse(raw);
+} catch (e) {
+  fail("Valid JSON", e.message || "Parse error");
+  console.log("\n--- Summary ---\nPassed: " + results.filter((r) => r.ok).length + ", Failed: " + results.filter((r) => !r.ok).length + "\n");
+  process.exit(1);
+}
+pass("Valid JSON", "parsed successfully");
+
+console.log("\n[2] ignore.customPatterns (or equivalent)");
+
+const ignorePatterns = config.ignore?.customPatterns ?? config.ignore ?? [];
+const patterns = Array.isArray(ignorePatterns) ? ignorePatterns : [];
+
+const requiredIgnore = [
+  { pattern: ".next/", name: ".next/" },
+  { pattern: "node_modules/", name: "node_modules/" },
+  { pattern: "package-lock.json", name: "package-lock.json" },
+  { pattern: "yarn.lock", name: "yarn.lock" },
+  { pattern: "pnpm-lock.yaml", name: "pnpm-lock.yaml" },
+];
+
+function patternMatches(patterns, target) {
+  const t = target.replace(/\*\*\/?/g, "").replace(/\/$/, "");
+  return patterns.some((p) => {
+    const s = String(p).replace(/\*\*\/?/g, "").replace(/\/$/, "");
+    return s === t || s.includes(t) || t.includes(s) || p === target || p.includes(target);
+  });
+}
+
+for (const { pattern, name } of requiredIgnore) {
+  if (patternMatches(patterns, pattern)) {
+    pass("Ignore pattern: " + name, "present");
+  } else {
+    fail("Ignore pattern: " + name, "missing from ignore.customPatterns");
+  }
+}
+
+console.log("\n[3] output.topFiles (or equivalent) includes .ai-status.md and docs/");
+
+const topFiles = config.output?.topFiles ?? config.topFiles ?? [];
+const topList = Array.isArray(topFiles) ? topFiles : [];
+
+const hasAiStatus = topList.some((f) => String(f).includes(".ai-status.md") || String(f) === ".ai-status.md");
+const hasDocs = topList.some((f) => String(f).includes("docs") || String(f) === "docs" || String(f) === "docs/");
+
+if (hasAiStatus) {
+  pass("Top files include .ai-status.md", "present");
+} else {
+  fail("Top files include .ai-status.md", "missing from output.topFiles (or equivalent)");
+}
+if (hasDocs) {
+  pass("Top files include docs/", "present");
+} else {
+  fail("Top files include docs/", "missing from output.topFiles (or equivalent)");
+}
+
+const failed = results.filter((r) => !r.ok);
+const passed = results.filter((r) => r.ok);
+console.log("\n--- Summary ---");
+console.log("Passed: " + passed.length + ", Failed: " + failed.length);
+if (failed.length > 0) {
+  console.log("\nFailed assertions:");
+  failed.forEach((r) => console.log("  - " + r.label + (r.detail ? ": " + r.detail : "")));
+  process.exit(1);
+}
+console.log("All Repomix config checks passed.\n");
+process.exit(0);
+</file>
+
+<file path="verify_routing.mjs">
+#!/usr/bin/env node
+/**
+ * Routing verification script (TDD Lite).
+ * Asserts Next.js App Router structure: (auth), (dashboard), (guest) route groups,
+ * required page.tsx files, and that each page exports a component containing <h1>.
+ * Uses only Node.js built-in fs — no extra npm packages.
+ */
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = __dirname;
+
+const results = [];
+
+function pass(label, detail = "") {
+  results.push({ ok: true, label, detail });
+  console.log(`  ✓ PASS: ${label}${detail ? ` (${detail})` : ""}`);
+}
+
+function fail(label, detail = "") {
+  results.push({ ok: false, label, detail });
+  console.log(`  ✗ FAIL: ${label}${detail ? ` — ${detail}` : ""}`);
+}
+
+function fileExists(filePath) {
+  try {
+    return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function readFileSafe(filePath) {
+  try {
+    return fs.readFileSync(filePath, "utf8");
+  } catch (e) {
+    if (e.code === "ENOENT") return null;
+    throw e;
+  }
+}
+
+function dirExists(filePath) {
+  try {
+    return fs.existsSync(filePath) && fs.statSync(filePath).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+const appBase = dirExists(path.join(projectRoot, "src", "app"))
+  ? path.join(projectRoot, "src", "app")
+  : path.join(projectRoot, "app");
+
+const routeGroups = [
+  {
+    name: "(auth)",
+    layout: true,
+    pages: [
+      { segment: "login", title: "Login" },
+      { segment: "signup", title: "Signup" },
+    ],
+  },
+  {
+    name: "(dashboard)",
+    layout: true,
+    pages: [
+      { segment: "dashboard", title: "Dashboard" },
+      { segment: "assets", title: "Assets" },
+      { segment: "airlock", title: "Airlock" },
+      { segment: "vault", title: "Vault" },
+      { segment: "governance", title: "Governance" },
+      { segment: "settings", title: "Settings" },
+    ],
+  },
+  {
+    name: "(guest)",
+    layout: true,
+    pages: [{ segment: "guest/view", title: "Guest View" }],
+  },
+];
+
+console.log("\n[1] App directory and route groups");
+if (!dirExists(appBase)) {
+  fail("App directory", `${appBase} not found`);
+} else {
+  pass("App directory", appBase.replace(projectRoot, "").replace(/^\//, "") || "app");
+}
+
+for (const group of routeGroups) {
+  const groupPath = path.join(appBase, group.name);
+  if (!dirExists(groupPath)) {
+    fail(`Route group ${group.name}`, `directory not found`);
+  } else {
+    pass(`Route group ${group.name}`, "exists");
+  }
+
+  if (group.layout) {
+    const layoutPath = path.join(groupPath, "layout.tsx");
+    if (!fileExists(layoutPath)) {
+      fail(`Layout for ${group.name}`, "layout.tsx not found");
+    } else {
+      const content = readFileSafe(layoutPath);
+      if (content && /children/.test(content)) {
+        pass(`Layout ${group.name}/layout.tsx`, "exists and uses children");
+      } else {
+        fail(`Layout ${group.name}/layout.tsx`, "must render {children}");
+      }
+    }
+  }
+
+  for (const page of group.pages) {
+    const pagePath = path.join(groupPath, page.segment, "page.tsx");
+    if (!fileExists(pagePath)) {
+      fail(`Page ${group.name}/${page.segment}/page.tsx`, "not found");
+    } else {
+      pass(`Page ${group.name}/${page.segment}/page.tsx`, "exists");
+      const content = readFileSafe(pagePath);
+      const hasDefaultExport = content && /export\s+default\s+function|export\s+default\s+\w+|export\s+{\s*\w+\s+as\s+default\s*}/.test(content);
+      const hasH1 = content && /<h1[\s>]/.test(content);
+      if (!hasDefaultExport) {
+        fail(`Page ${page.segment} default export`, "page must export default component");
+      } else {
+        pass(`Page ${page.segment} default export`, "present");
+      }
+      if (!hasH1) {
+        fail(`Page ${page.segment} <h1>`, "page must contain an <h1> tag");
+      } else {
+        pass(`Page ${page.segment} <h1>`, "present");
+      }
+    }
+  }
+}
+
+const failed = results.filter((r) => !r.ok);
+const passed = results.filter((r) => r.ok);
+console.log("\n--- Summary ---");
+console.log(`Passed: ${passed.length}, Failed: ${failed.length}`);
+if (failed.length > 0) {
+  console.log("\nFailed assertions:");
+  failed.forEach((r) => console.log(`  - ${r.label}${r.detail ? `: ${r.detail}` : ""}`));
+  process.exit(1);
+}
+console.log("All routing checks passed.\n");
+process.exit(0);
+</file>
+
+<file path="verify_scaffold.mjs">
+#!/usr/bin/env node
+"use strict";
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname);
+const errors = [];
+
+function assert(condition, message) {
+  if (!condition) errors.push(message);
+}
+
+// 1. package.json exists and contains required dependencies
+const pkgPath = path.join(ROOT, "package.json");
+assert(fs.existsSync(pkgPath), "package.json does not exist");
+
+if (fs.existsSync(pkgPath)) {
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+  const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+  const required = ["next", "react", "typescript", "eslint", "prettier"];
+  for (const dep of required) {
+    assert(deps[dep], `package.json missing dependency or devDependency: ${dep}`);
+  }
+}
+
+// 2. app/ directory (Next.js App Router) exists
+assert(
+  fs.existsSync(path.join(ROOT, "app")) && fs.statSync(path.join(ROOT, "app")).isDirectory(),
+  "app/ directory does not exist"
+);
+
+// 3. docs/ directory exists
+assert(
+  fs.existsSync(path.join(ROOT, "docs")) && fs.statSync(path.join(ROOT, "docs")).isDirectory(),
+  "docs/ directory does not exist"
+);
+
+// 4. .ai-status.md exists
+assert(fs.existsSync(path.join(ROOT, ".ai-status.md")), ".ai-status.md does not exist");
+
+if (errors.length > 0) {
+  console.error("Verification failed:\n");
+  errors.forEach((e) => console.error("  -", e));
+  process.exit(1);
+}
+
+console.log("verify_scaffold: all assertions passed.");
+process.exit(0);
+</file>
+
+<file path="app/(auth)/login/page.tsx">
+import { LoginForm } from "../login-form";
+
+export default function LoginPage() {
+  return <LoginForm />;
+}
+</file>
+
+<file path="app/(auth)/signup/page.tsx">
+import { SignUpForm } from "../signup-form";
+
+export default function SignupPage() {
+  return <SignUpForm />;
+}
+</file>
+
+<file path="app/(auth)/actions.ts">
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+
+export type ActionResult = { error?: string; success?: boolean; redirectTo?: string };
+
+export async function loginAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const email = formData.get("email") as string | null;
+  const password = formData.get("password") as string | null;
+  if (!email?.trim() || !password) {
+    return { error: "Email and password are required." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+  if (error) {
+    return { error: "Invalid email or password." };
+  }
+  // Return success and let the client redirect to avoid "unexpected response" errors
+  // when the Server Action redirect is altered by proxies (e.g. Amplify).
+  return { success: true, redirectTo: "/dashboard" };
+}
+
+export async function signUpAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const email = formData.get("email") as string | null;
+  const password = formData.get("password") as string | null;
+  if (!email?.trim() || !password) {
+    return { error: "Email and password are required." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signUp({
+    email: email.trim(),
+    password,
+    options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/login` },
+  });
+  // Data contract: ensure a corresponding User row is created (DB trigger or post-signup hook).
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true, redirectTo: "/login" };
+}
+
+export async function forgotPasswordAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const email = formData.get("email") as string | null;
+  if (!email?.trim()) {
+    return { error: "Email is required." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/login`,
+  });
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
+
+export async function logoutAction(
+  _prev: unknown,
+  _formData?: FormData
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  return { success: true, redirectTo: "/login" };
+}
+</file>
+
+<file path="app/(auth)/layout.tsx">
+export default function AuthLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50">
+      {children}
+    </div>
+  );
+}
+</file>
+
+<file path="app/(auth)/login-form.tsx">
+"use client";
+
+import { useActionState, useEffect } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { loginAction, type ActionResult } from "./actions";
+
+export function LoginForm() {
+  const [state, formAction] = useActionState(loginAction, null as ActionResult | null);
+
+  useEffect(() => {
+    if (state?.success && state?.redirectTo) {
+      window.location.href = state.redirectTo;
+    }
+  }, [state?.success, state?.redirectTo]);
+
+  return (
+    <div className="w-full max-w-sm space-y-6 rounded-lg border border-border bg-white p-6 shadow-sm">
+      <h1 className="text-xl font-semibold tracking-tight">Log in</h1>
+      <form action={formAction} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium">
+            Email
+          </label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            required
+            autoComplete="email"
+            className="w-full"
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="password" className="text-sm font-medium">
+            Password
+          </label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autoComplete="current-password"
+            className="w-full"
+          />
+        </div>
+        {state?.error && (
+          <p className="text-sm text-destructive" role="alert">
+            {state.error}
+          </p>
+        )}
+        <Button type="submit" className="w-full">
+          Log in
+        </Button>
+      </form>
+      <p className="text-center text-sm text-muted-foreground">
+        Don&apos;t have an account?{" "}
+        <Link href="/signup" className="font-medium text-primary underline-offset-4 hover:underline">
+          Sign up
+        </Link>
+      </p>
+      <p className="text-center text-sm">
+        <Link href="/forgot-password" className="text-muted-foreground underline-offset-4 hover:underline">
+          Forgot password?
+        </Link>
+      </p>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(auth)/signup-form.tsx">
+"use client";
+
+import { useActionState, useEffect } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { signUpAction, type ActionResult } from "./actions";
+
+export function SignUpForm() {
+  const [state, formAction] = useActionState(signUpAction, null as ActionResult | null);
+
+  useEffect(() => {
+    if (state?.success && state?.redirectTo) {
+      window.location.href = state.redirectTo;
+    }
+  }, [state?.success, state?.redirectTo]);
+
+  return (
+    <div className="w-full max-w-sm space-y-6 rounded-lg border border-border bg-white p-6 shadow-sm">
+      <h1 className="text-xl font-semibold tracking-tight">Sign up</h1>
+      <form action={formAction} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium">
+            Email
+          </label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            required
+            autoComplete="email"
+            className="w-full"
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="password" className="text-sm font-medium">
+            Password
+          </label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autoComplete="new-password"
+            minLength={6}
+            className="w-full"
+          />
+        </div>
+        {state?.error && (
+          <p className="text-sm text-destructive" role="alert">
+            {state.error}
+          </p>
+        )}
+        <Button type="submit" className="w-full">
+          Sign up
+        </Button>
+      </form>
+      <p className="text-center text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
+          Log in
+        </Link>
+      </p>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/dashboard/page.tsx">
+export default function RunwayDashboardPage() {
+  return <h1>Runway Dashboard</h1>;
+}
+</file>
+
+<file path="app/(dashboard)/layout.tsx">
+import Sidebar from "@/components/ui/sidebar";
+
+export default function DashboardLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <div className="flex h-screen bg-slate-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="h-16 flex items-center px-8 bg-white border-b border-border">
+          <span className="text-sm font-medium text-muted-foreground">
+            Dashboard
+          </span>
+        </header>
+        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/globals.css">
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  /* Typography: Geist Sans (Inter or Geist per contract); use tabular-nums utility for numerical/financial data */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+:root {
+  --radius: 0.625rem;
+  /* Main background: soft off-white (slate-50) */
+  --background: oklch(0.984 0.003 247.858);
+  --foreground: oklch(0.145 0 0);
+  /* Elevated components: pure white */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  /* Primary action: deep navy (slate-900) */
+  --primary: oklch(0.208 0.042 265.755);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  /* Borders: subtle (slate-200) */
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.208 0.042 265.755);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+</file>
+
+<file path="app/page.tsx">
+import Link from "next/link";
+
+export default function Home() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 font-sans">
+      <main className="flex max-w-xl flex-col items-center gap-8 text-center">
+        <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+          P3
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          Financial projections, simplified. Build and manage your forward-looking model in one place.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <Link
+            href="/signup"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Get started
+          </Link>
+          <Link
+            href="/login"
+            className="inline-flex h-11 items-center justify-center rounded-lg border border-input bg-background px-6 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            Sign in
+          </Link>
+        </div>
+      </main>
+    </div>
+  );
+}
+</file>
+
+<file path="components/ui/sidebar.tsx">
+"use client";
+
+import { useEffect } from "react";
+import { useActionState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { logoutAction, type ActionResult } from "@/app/(auth)/actions";
+import {
+  LayoutDashboard,
+  LineChart,
+  FileInput,
+  CalendarCheck,
+  Settings,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const modelingItems = [
+  { href: "/canvas", label: "Projection Canvas", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Runway Dashboard", icon: LineChart },
+] as const;
+
+const actualsItems = [
+  { href: "/import", label: "Import Bank CSV", icon: FileInput },
+  { href: "/actuals", label: "Month Close & History", icon: CalendarCheck },
+] as const;
+
+export default function Sidebar() {
+  const pathname = usePathname();
+  const [state, formAction] = useActionState(logoutAction, null as ActionResult | null);
+
+  useEffect(() => {
+    if (state?.redirectTo) {
+      window.location.href = state.redirectTo;
+    }
+  }, [state?.redirectTo]);
+
+  const navLinkClass = (href: string) =>
+    cn(
+      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+      pathname === href
+        ? "bg-primary text-primary-foreground"
+        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+    );
+
+  return (
+    <aside className="w-64 hidden md:flex flex-col border-r border-border bg-white">
+      <nav className="flex-1 flex flex-col gap-1 p-4">
+        <p className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          MODELING
+        </p>
+        {modelingItems.map(({ href, label, icon: Icon }) => (
+          <Link key={href} href={href} className={navLinkClass(href)}>
+            <Icon className="size-4 shrink-0" />
+            {label}
+          </Link>
+        ))}
+        <p className="mt-4 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          ACTUALS
+        </p>
+        {actualsItems.map(({ href, label, icon: Icon }) => (
+          <Link key={href} href={href} className={navLinkClass(href)}>
+            <Icon className="size-4 shrink-0" />
+            {label}
+          </Link>
+        ))}
+        <div className="mt-4 pt-2 border-t border-border">
+          <Link
+            href="/settings"
+            className={navLinkClass("/settings")}
+          >
+            <Settings className="size-4 shrink-0" />
+            Settings
+          </Link>
+        </div>
+      </nav>
+      <div className="p-4 border-t border-border">
+        <form action={formAction}>
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label="Logout"
+          >
+            Logout
+          </button>
+        </form>
+      </div>
+    </aside>
+  );
+}
+</file>
+
+<file path="docs/ARCHITECTURE.md">
+# Architecture
+
+## Phase 1: Walking Skeleton (Current State)
+
+Phase 1 delivers a minimal end-to-end slice: public landing, auth flows, protected dashboard shell, and guest route. The app uses the Next.js App Router with route groups; session is enforced by middleware and React context.
+
+### App router structure (as implemented)
+
+```
+app/
+├── layout.tsx                 # Root: fonts, AuthProvider, globals
+├── page.tsx                   # Landing / (teaser)
+├── globals.css
+├── favicon.ico
+├── (auth)/
+│   ├── layout.tsx             # Centered full-screen shell (bg-slate-50)
+│   ├── login/page.tsx         # /login
+│   ├── signup/page.tsx        # /signup
+│   ├── forgot-password/page.tsx  # /forgot-password
+│   ├── login-form.tsx         # Client form + useActionState
+│   ├── signup-form.tsx
+│   ├── forgot-password-form.tsx
+│   └── actions.ts             # Server Actions (Supabase auth)
+├── (dashboard)/
+│   ├── layout.tsx             # Sidebar + header + main content area
+│   ├── dashboard/page.tsx     # /dashboard
+│   ├── assets/page.tsx        # /assets
+│   ├── airlock/page.tsx       # /airlock
+│   ├── vault/page.tsx         # /vault
+│   ├── governance/page.tsx    # /governance
+│   └── settings/page.tsx      # /settings
+└── (guest)/
+    ├── layout.tsx
+    └── guest/view/page.tsx    # /guest/view
+```
+
+### Key implementation details
+
+- **Middleware** (`src/middleware.ts`): Supabase server client; protects `/dashboard`, `/assets`, `/airlock`, `/vault`, `/governance`, `/settings`, and `/guest`; redirects unauthenticated users to `/login`; redirects authenticated users from `/` or `/login` to `/dashboard`.
+- **AuthProvider** (`components/auth-provider.tsx`): Wraps root layout; exposes `session` and `isLoading` via React Context (`useAuth()`); uses Supabase browser client and `onAuthStateChange`.
+- **Dashboard layout**: Uses `@/components/ui/sidebar` (Client Component with `usePathname` for active state); links to the six dashboard routes and a logout action.
+- **Auth layout**: Centered flex full-screen shell; no sidebar.
+- **Design**: Tailwind + shadcn tokens; Geist fonts. UI components in use: `button`, `input`, `card`, `sidebar`.
+
+### Route inventory (Phase 1)
+
+| Experience   | Route group   | Paths |
+|-------------|---------------|-------|
+| Public      | (none)        | `/` (landing) |
+| Auth        | `(auth)`      | `/login`, `/signup`, `/forgot-password` |
+| Protected   | `(dashboard)` | `/dashboard`, `/assets`, `/airlock`, `/vault`, `/governance`, `/settings` |
+| Guest       | `(guest)`     | `/guest/view` |
+
+---
+
+## Phase 2 and future phases
+
+Phase 2 and beyond are specified in **docs/UX_SPEC.md** (Vertical UI Specification) and **docs/FUNCTIONAL_SPEC.md**. They include:
+
+- **Phase 2:** Projection Canvas, Output Dashboard, CSV Ingestion & Mapping Wizard, Month Close & Health Score, Authentication & Global Navigation Shell, Period Management & History.
+
+Do not remove or overwrite these phase plans when updating Phase 1 or current-state documentation.
+</file>
+
+<file path="src/middleware.ts">
+import { createServerClient } from "@supabase/ssr";
+import { type NextRequest, NextResponse } from "next/server";
+
+const LOGIN_PATH = "/login";
+const DASHBOARD_PATH = "/dashboard";
+
+const protectedRoutePrefixes = [
+  "/dashboard",
+  "/canvas",
+  "/import",
+  "/actuals",
+  "/settings",
+  "/assets",
+  "/airlock",
+  "/vault",
+  "/governance",
+];
+const guestRoutePrefix = "/guest";
+
+function isProtectedPath(pathname: string): boolean {
+  return protectedRoutePrefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
+}
+
+function isGuestPath(pathname: string): boolean {
+  return pathname === guestRoutePrefix || pathname.startsWith(guestRoutePrefix + "/");
+}
+
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: { headers: request.headers },
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll().map((c) => ({ name: c.name, value: c.value }));
+        },
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+          response = NextResponse.next({ request: { headers: request.headers } });
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options as { path?: string; maxAge?: number });
+          });
+        },
+      },
+    }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const pathname = request.nextUrl.pathname;
+
+  if (isProtectedPath(pathname) || isGuestPath(pathname)) {
+    if (!user) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = LOGIN_PATH;
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  if (user && (pathname === "/" || pathname === LOGIN_PATH)) {
+    const dashboardUrl = request.nextUrl.clone();
+    dashboardUrl.pathname = DASHBOARD_PATH;
+    return NextResponse.redirect(dashboardUrl);
+  }
+
+  return response;
+}
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
+};
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"],
+      "@/lib/supabase/*": ["./src/lib/supabase/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="app/layout.tsx">
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { AuthProvider } from "@/components/auth-provider";
+import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "P3 — Financial Projections",
+  description:
+    "Financial projections, simplified. Build and manage your forward-looking model in one place.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <AuthProvider>{children}</AuthProvider>
+      </body>
+    </html>
+  );
+}
+</file>
+
+<file path="docs/FUNCTIONAL_SPEC.md">
+**P3**
+
+**Financial Projection Engine**
+
+Product Requirements Document
+
+Version 1.0  |  March 2026
+
+Target: V1 — Early-Stage B2B / PLG SaaS Startups
+
+# **1\. Product Overview**
+
+## **1.1 Problem Statement**
+
+Early-stage SaaS founders manage runway using fragile, hand-built spreadsheets. These models break silently, diverge from reality after the first CSV import, and require significant manual effort to update each month. The result is that founders either over-engineer brittle models or stop trusting their projections entirely — making critical hiring, spending, and fundraising decisions with degraded financial visibility.
+
+## **1.2 Solution**
+
+P3 is a deterministic, month-over-month financial modeling engine built specifically for SaaS startups. It replaces formula-driven spreadsheets with a visual canvas of composable Building Blocks, ingests real accounting data via a structured CSV import, and automatically grades the founder's assumptions against actual results every month.
+
+## **1.3 Target Audience**
+
+V1 target: Founders and operators of early-stage B2B SaaS and PLG SaaS companies. Single-user accounts. No multi-seat or enterprise features in scope.
+
+## **1.4 Monetization**
+
+V1 is 100% free. The goal is rapid user acquisition and product feedback. Monetization strategy is out of scope for this document.
+
+## **1.5 Out of Scope for V1**
+
+* Multi-user collaboration, role management, and permission flows
+
+* Automated tax calculation by jurisdiction
+
+* Hard Restatement of historically closed months (deferred to V2)
+
+* Multi-currency support (requires external normalization before import)
+
+* Equity / options modeling
+
+* Balance sheet and accounts receivable / payable modeling
+
+# **2\. Data Architecture**
+
+## **2.1 Core Entity Hierarchy**
+
+The system is organized around the following hierarchy:
+
+| Entity | Description |
+| :---- | :---- |
+| **Organization** | Top-level tenant. One organization per account in V1. |
+| **Workspace** | The active financial model environment. Contains all scenarios, blocks, and historical data. |
+| **ChartOfAccounts** | Standardized, immutable ledger categories: Revenue, COGS, OpEx, Headcount. Unmapped rows are grouped into an 'Uncategorized / Suspense' category to ensure mathematical balancing at all times. |
+| **HistoricalRecord** | Mapped CSV data tagged by month and linked to ChartOfAccounts entries. Lives in Draft or Closed state. |
+| **Block** | A JSON object encoding a specific assumption (e.g., type: Personnel, payload: { salary: 120000, start\_month: Oct-2024 }). Belongs to exactly one Scenario. |
+| **Scenario** | A distinct, isolated array of Blocks representing a parallel planning universe. Scenarios are hard copies — no live inheritance. |
+
+## **2.2 Scenario Architecture**
+
+**Hard Copy Model.** Creating a child scenario generates a static fork. There is no live parent-child inheritance. Each scenario is a fully self-contained clone of the blocks at the moment of duplication.
+
+**Global Assumptions Panel.** Each scenario has its own isolated Global Variables Panel (e.g., Churn Rate, Base Price). Duplicating a scenario creates a complete clone of its panel. Blocks within a scenario reference these variables and recalculate transversally when a global variable is modified. Modifying one scenario's panel never mutates another scenario.
+
+**Scenario Limits (V1).** Users may create an unlimited number of parallel scenarios within a Workspace on the free V1 plan.
+
+## **2.3 State Model**
+
+| State | Behavior |
+| :---- | :---- |
+| **Draft** | CSV data has been imported but the Month Close has not been executed. The founder may freely edit cells, correct amounts, or add unrecorded expenses. A new CSV upload in Draft state executes a destructive overwrite — all prior manual edits are permanently lost. |
+| **Closed** | Month Close has been executed. Data is locked. Re-opening requires a deliberate action and a Diff View confirmation step. |
+
+# **3\. CSV Ingestion & Standardization**
+
+## **3.1 Overview**
+
+The CSV importer accepts accounting exports from tools such as QuickBooks or Xero. It is the primary mechanism for grounding the model in real historical data. CSV import is optional — the tool is fully usable without it from day one (see Section 6: Onboarding).
+
+## **3.2 Business Rules**
+
+### **Partial Month Hard Block**
+
+Any CSV upload whose maximum transaction date falls before the last calendar day of that month will be immediately rejected or quarantined until the month is complete. The engine enforces strict full-month boundaries for actuals.
+
+### **Destructive Overwrite**
+
+If a new CSV is uploaded for a month currently in Draft state, the system executes a total destructive overwrite. Any previous manual adjustments in that month are irretrievably lost. The UI must surface a clear, explicit warning before the overwrite is confirmed.
+
+### **Unmapped Row Handling**
+
+There is no hard block for unmapped transactions. The Mapping Wizard includes an explicit 1-click opt-in step to group these into 'Uncategorized / Suspense.' For forecasting purposes, the engine will assume $0 future spend for any historically uncategorized line. If the running balance of Uncategorized / Suspense is greater than $0, the UI must display a non-dismissible red warning in the main dashboard to prevent false-positive runway projections.
+
+### **Duplicate Detection (Manual Quarantine)**
+
+The ingestion algorithm will not silently approve or delete exact duplicates (same date, amount, and description). It will pause and force the user to explicitly choose: 'Approve both' or 'Discard duplicate.' Silent deduplication is prohibited.
+
+### **Currency**
+
+Multi-currency files trigger a hard block in V1. The user must externally normalize currency before importing. Single-currency validation must be explicit during the mapping step.
+
+### **Algebraic Signs**
+
+The system strictly respects algebraic signs. Negative amounts (e.g., Stripe refunds, credit notes) are automatically subtracted without requiring forced 'Contra-Revenue' categories.
+
+### **Strict CSV Dominance**
+
+In any month containing CSV data (Draft or Closed), the outputs of all Canvas Building Blocks for that month are silenced from the P\&L calculation. The forecasting engine projects outputs only starting from the first chronologically empty month.
+
+UI behavior in dominated months: The block's original projected value is displayed in muted gray. The actual CSV value is displayed in full contrast. The variance (actual minus projected) is shown inline in red (negative) or green (positive). Blocks are not hidden from the canvas.
+
+### **Auto-Mapping Assistance**
+
+Engineering must implement a suggested auto-grouping feature (e.g., rows containing 'salary' or 'payroll' in their description are suggested under Headcount). This feature is strictly opt-in — the system will never assign categories silently. The user must manually trigger the suggestion for assistance.
+
+# **4\. The Projection Canvas**
+
+## **4.1 Overview**
+
+The Canvas is the primary workspace where founders build their forward-looking financial model. Users add and configure Building Blocks on a monthly timeline without writing formulas. Blocks are connected through a dropdown-based dependency system (see Section 4.4).
+
+## **4.2 Mathematical Engine Rules**
+
+### **30/360 Month Standard**
+
+The engine uses a standard 30-day month for all prorating calculations, ignoring literal calendar days. A $3,000 fixed expense starting mid-month calculates at $100 per day consistently, eliminating calendar-induced noise from projected margins.
+
+### **Block Start Month Behavior**
+
+A block with a future start\_month has zero financial impact in all months prior to that date. It appears on the canvas from day one (so the founder is aware of the planned commitment), but its contribution to any financial output is $0 until the designated start month.
+
+### **Recalculation Latency**
+
+Recalculating the model after a toggle, block edit, or dependency change triggers a synchronous lock with a loading spinner (expected 1–2 seconds). Real-time uninterrupted rendering is explicitly not a V1 requirement. Cascading dependency chains of unlimited depth are supported, with the latency trade-off accepted.
+
+## **4.3 Dependency Logic & Validation**
+
+### **Circular Dependency Prevention**
+
+The UI features proactive graph validation. In a child block's property panel dropdown, any block that already exists downstream in the calculation chain is shown as visible but disabled (grayed out), preventing selection and providing immediate visual feedback. Attempting to create a circular connection results in a snap-back and an error message.
+
+### **Deletion Guard**
+
+The system prohibits deletion of a Parent Block if it has dependent Child Blocks or projected impacts in future months. The user must explicitly unlink or delete the downstream cascade first.
+
+### **Soft Disable (Inactives Tray)**
+
+Toggling a Parent Block to 'off' triggers a temporary, cascading unlinking of all its Child Blocks. Hidden blocks have $0 P\&L impact and are moved to an 'Inactive Projections' tray. They can be restored at any time. This operation is reversible.
+
+## **4.4 Driver-Based Reference Fields**
+
+### **Concept**
+
+Any numeric input field on any block can be set to one of three modes:
+
+* Static: A constant value entered directly by the user.
+
+* Referenced: Points to a named output slot of another block. The value updates automatically when the source block recalculates.
+
+* Formula: Combines one or more references and/or static constants using the operators \+, \-, ×, ÷. Example: aws\_cost \= total\_revenue\_mrr × 0.08
+
+### **Output Slots**
+
+Every block exposes a defined set of named output slots. Examples:
+
+| Block Type | Output Slots Exposed |
+| :---- | :---- |
+| **Revenue** | mrr, new\_customers, churned\_customers, mrr\_cumulative, new\_customers\_cumulative |
+| **Marketing** | new\_customers\_generated, total\_spend, total\_spend\_cumulative |
+| **Personnel** | total\_headcount, total\_salary\_cost, total\_fully\_loaded\_cost, total\_salary\_cost\_cumulative |
+| **OpEx (Fixed)** | monthly\_cost, monthly\_cost\_cumulative |
+| **Capital** | cash\_injected |
+
+The \_cumulative suffix variants return the running total from the model start date through the current month. All output slots return a per-month value by default.
+
+# **5\. Core Building Blocks (V1)**
+
+All five block types below are required for V1. Each block's inputs can be Static, Referenced, or Formula (see Section 4.4).
+
+## **5.1 Personnel / Headcount Block**
+
+| Field | Specification |
+| :---- | :---- |
+| **Role Name** | Free text label. |
+| **Monthly Gross Salary** | Base compensation input. |
+| **Employer Burden %** | Employer taxes and benefits as a percentage of gross salary (e.g., 25%). Applied multiplicatively. Stored separately from gross salary. Total fully-loaded cost \= gross salary × (1 \+ burden %). |
+| **Start Month** | Month the hire begins. No financial impact before this month; block is visible on canvas from creation. |
+| **End Month** | Optional. If set, the block's cost contribution terminates after this month. |
+| **Headcount Count** | Number of people in this role (default: 1). Can be a static integer or a Referenced/Formula value. |
+
+## **5.2 Revenue Block**
+
+| Field | Specification |
+| :---- | :---- |
+| **Starting MRR** | Initial Monthly Recurring Revenue at model start. |
+| **ARPA** | Average Revenue Per Account. Used to convert new customer count into MRR contribution. |
+| **Monthly Churn %** | Applied to existing MRR each month. |
+| **Billing Frequency** | Monthly or Annual Prepaid. If Annual: cash injection \= 12 months of MRR in Month 1; $0 cash inflow for months 2–12. Cohort renewal at Month 13 \= (initial cohort customers − cumulative churn) × annual ticket. |
+
+MRR formula (monthly): MRR(n) \= MRR(n-1) \+ (New Customers(n) × ARPA) − (MRR(n-1) × Churn %)
+
+## **5.3 Marketing Block**
+
+| Field | Specification |
+| :---- | :---- |
+| **Monthly Ad Spend** | Total spend per month on paid acquisition. |
+| **Target CAC** | Customer Acquisition Cost. New customers generated \= Monthly Spend ÷ CAC. |
+| **Sales Cycle Lag (months)** | Integer. The engine holds new customer output and automatically pushes it into the Revenue Block exactly X months later. Lag \= 0 means same-month impact. |
+
+## **5.4 OpEx (Fixed) Block**
+
+| Field | Specification |
+| :---- | :---- |
+| **Expense Name** | Free text label. |
+| **Monthly Cost** | Flat monthly deduction from operational cash flow. |
+| **Annual Growth Rate %** | Auto-applied on each block anniversary month (i.e., 12 months after start). Does not compound mid-year. |
+
+Note: Taxes are handled by creating manual OpEx (Fixed) or one-time blocks in the specific payment months. The system does not attempt to calculate tax obligations automatically.
+
+## **5.5 Capital (Funding) Block**
+
+| Field | Specification |
+| :---- | :---- |
+| **Funding Type** | Equity or Debt. |
+| **Amount** | Total capital received. Treated as a one-time positive spike to the cash flow statement in the specified month. |
+| **Month Received** | The calendar month in which cash lands. |
+
+# **6\. Onboarding Experience**
+
+## **6.1 Principles**
+
+The tool must be immediately usable without a CSV upload. CSV import enriches the model with historical actuals but is never a prerequisite. A founder should be able to build a complete forward-looking projection in under 10 minutes without importing any data.
+
+## **6.2 Empty State & Starting Point**
+
+On first login, the workspace presents a single required input before anything else: Starting Cash Balance (the amount of cash currently in the bank). This is the only mandatory field to initialize the model. Once set, the canvas is unlocked and the user can begin adding blocks immediately.
+
+## **6.3 Progressive Activation Checklist**
+
+A persistent sidebar checklist guides the user through activation milestones. Each completed step is visually marked. Steps unlock progressively:
+
+| \# | Step | What it unlocks |
+| :---- | :---- | :---- |
+| **1** | Set your Starting Cash Balance | Canvas and block creation |
+| **2** | Add your first Revenue block | Runway Tripwire visible in output dashboard |
+| **3** | Add your first cost block | Full P\&L and net burn chart |
+| **4** | Import historical CSV data | Variance analysis, Month Close, and Health Score |
+
+## **6.4 Startup Month Exception**
+
+The first real CSV imported is frequently a partial or irregular month (the company's actual start month). To avoid generating misleading variance alerts, the user may activate an 'Ignore Variance' flag — available exclusively for the designated startup month. This silences all visual variance alerts for that specific month only.
+
+# **7\. Scenario Planning**
+
+## **7.1 Creating Scenarios**
+
+Any scenario can be duplicated to create a static hard copy. The copy is fully isolated — changes to the original do not propagate to the copy and vice versa. Users can maintain unlimited parallel scenarios in V1.
+
+## **7.2 What-If Mode (Volatile State)**
+
+Block toggles (on/off) operate locally in the browser and do not persist to the database until the user executes an explicit 'Apply Changes' or 'Save as New Scenario' action. This prevents accidental mutation of saved scenarios during exploratory analysis.
+
+## **7.3 Variance Computation Across Scenarios**
+
+When a monthly CSV is ingested, the engine calculates variance against all existing scenarios. To protect frontend performance, these results are computed server-side but only rendered in the UI when the user actively opens that scenario.
+
+# **8\. Month Close & Variance Engine**
+
+## **8.1 Month Close Process**
+
+Month Close is a strict manual trigger executed at the founder's discretion. The system never auto-closes a month. If executing Month Close would overwrite previously closed data, the system mandates a Diff View (side-by-side comparison of old vs. new state) before confirming.
+
+## **8.2 Variance Treatment**
+
+The difference between projected cash and actual CSV cash balance is absorbed to redefine the real starting point for future months, adjusting the Runway Tripwire dynamically. The engine does not automatically roll over budgetary debt or surplus to future months — forward projections remain faithful to the user's original block inputs.
+
+## **8.3 Health Score**
+
+After Month Close, the system computes a Health Score that grades the founder's assumptions against actuals. The specific scoring methodology (e.g., weighted accuracy across Revenue, Headcount, and OpEx blocks) is to be defined during the design phase, but must be surfaced prominently in the output dashboard.
+
+# **9\. Output Dashboard**
+
+## **9.1 Overview**
+
+The output dashboard is the primary read surface. It is always filtered by the currently active scenario. It consists of two synchronized components: a Chart and a Financial Table.
+
+## **9.2 The Runway Chart**
+
+A stacked area chart with the following specifications:
+
+* X-axis: Monthly timeline (from model start to end of projection horizon).
+
+* Displayed series: Cash Balance (projected) as a filled area; Cash Balance (actual) as a solid line overlaid where CSV data exists; Gross Burn as a secondary area.
+
+* Runway Tripwire: A vertical red dashed line marking the projected date at which Cash Balance reaches $0. The line moves dynamically when blocks, scenarios, or variables are modified. The date is labeled directly on the line.
+
+* Actuals vs. Projected divergence is visually distinct — projected uses a lighter fill, actuals use a solid overlay.
+
+## **9.3 The Monthly Financial Table**
+
+A month-by-month table synchronized with the chart. Columns:
+
+| Column | Description |
+| :---- | :---- |
+| **Month** | Calendar month label. |
+| **Revenue** | Total MRR / cash revenue for the month. |
+| **COGS** | Cost of Goods Sold. |
+| **Gross Profit** | Revenue minus COGS. |
+| **OpEx** | Total operating expenses (Personnel \+ Fixed OpEx). |
+| **Net Burn** | Gross Profit minus OpEx. Negative \= burning cash. |
+| **Cash Balance** | Running cash position. |
+| **Runway** | Months of runway remaining from this month, given current net burn. |
+
+Cell behavior in months with CSV actuals: projected value displayed in muted gray with strikethrough; actual value in full contrast black; variance displayed below in red (negative) or green (positive).
+
+## **9.4 Runway Tripwire Definition**
+
+The Runway Tripwire is the projected calendar date on which the Cash Balance first reaches $0, given the current active scenario's block configuration and the last known actual cash balance. It is:
+
+* Displayed as a labeled vertical line on the Runway Chart.
+
+* Displayed as a standalone metric at the top of the dashboard (e.g., 'Runway: Aug 2027 — 17 months').
+
+* Updated dynamically whenever any block, global variable, or scenario toggle is changed and recalculated.
+
+* Recalculated against all scenarios on CSV ingestion (results rendered lazily per scenario).
+
+# **10\. Known Risks & Engineering Constraints**
+
+| Risk | Impact | Mitigation |
+| :---- | :---- | :---- |
+| **CSV Mapping Fatigue (500+ row files)** | High abandonment at import step. | Opt-in auto-mapping suggestions. User must manually confirm every category assignment. |
+| **Toggle Performance at Scale (100+ blocks)** | Chart rendering lag; potential crashes. | Synchronous lock with 1–2s spinner on recalculation. Real-time rendering is explicitly out of scope. |
+| **Deep Dependency Chains** | Cascading recalculation latency. | Unlimited depth supported; 1–2s latency trade-off accepted and communicated to user via spinner. |
+| **Uncategorized Suspense Balance** | False-positive runway projections. | Non-dismissible red warning on dashboard when Suspense \> $0. |
+| **First CSV partial month** | Massive false variance alert on startup month. | 'Ignore Variance' flag available exclusively for the startup month. |
+
+# **Appendix: Key Product Decisions Log**
+
+This appendix documents the rationale behind non-obvious product decisions to prevent re-litigation during development.
+
+### **A1. Hard Copy Scenarios vs. Live Inheritance**
+
+Decision: Scenarios are static forks with no live parent-child inheritance. Rationale: Live inheritance creates hidden mutation risks — a change to the parent silently propagates to all children, corrupting separate planning universes. Hard copies are predictable and auditable.
+
+### **A2. Driver-Based Reference Fields vs. Closed-Logic Block Types**
+
+Decision: Any numeric field can reference any block output, rather than building bespoke block types for every cost pattern. Rationale: Founders need to model the real physics of their business (e.g., AWS cost \= % of revenue; licenses \= headcount multiplier). A reference field system provides extreme flexibility without requiring dozens of narrow block types.
+
+### **A3. Dependency UI via Dropdown vs. Visual Connectors**
+
+Decision: Parent-child relationships are configured via dropdown menus inside the child block's property panel, not by drawing arrows on the canvas. Rationale: Visual connectors create extreme clutter in complex models and add significant frontend development cost. Dropdowns are faster to build, easier to use, and scale cleanly.
+
+### **A4. MRR as Primary Revenue Input**
+
+Decision: The Revenue block uses MRR as its primary planning unit, with a Billing Frequency selector (Monthly / Annual Prepaid). Rationale: SaaS founders plan in MRR, but survival depends on actual cash. The Billing Frequency field bridges the gap automatically — annual prepay injects 12 months of cash in Month 1 without forcing manual calculation.
+
+### **A5. No Automated Tax Calculation**
+
+Decision: Taxes are modeled as manual OpEx or one-time outflow blocks in specific payment months. Rationale: Calculating net taxable income and applying jurisdiction-specific rates introduces legal and technical complexity that is out of scope for V1. Manual tax entries keep the math rigorous while avoiding compliance liability.
+
+### **A6. Hard Restatement Deferred to V2**
+
+Decision: The ability to reopen and re-categorize historically closed months is deferred to V2. Rationale: The feature is high-complexity, high-risk, and low-frequency for early-stage founders with limited history. V1 replacement: a manual adjustment entry in the current month can correct the effective impact of a past miscategorization.
+
+### **A7. Annual Billing — No Prorated Refund on Cancellation**
+
+Decision: Annual contract cancellations do not generate automatic prorated refunds in the model. The full cash inflow is retained in Month 1\. Rationale: Prorated refund modeling adds complexity with minimal practical impact for early-stage planning. Founders can model known refund obligations with a manual Capital or OpEx block.
+</file>
+
+<file path="docs/UX_SPEC.md">
+# **P3: Frontend Architecture & UX Spec**
+
+As the Principal Frontend Architect, I have evaluated the Product Requirements Document (PRD) and the Unified Data & API Contract for the P3 Financial Projection Engine. To ensure absolute alignment between the UX vision and the Next.js 14+ technical implementation, this document enforces a strict, contract-driven architecture.
+
+Global client state for domain data is strictly **FORBIDDEN**. All view states, active scenarios, and filters **MUST** be driven by URL Search Parameters to guarantee linkability and predictability. All server state **MUST** be synchronized via React Query.
+
+### **1\. Design System & Global Tokens**
+
+"Artisanal" styling is **FORBIDDEN**. All visual rules **MUST** be constrained to standard Tailwind CSS tokens to support the deterministic, SaaS-focused nature of P3.
+
+* **Typography:** We **MUST** use a highly legible, dense sans-serif font optimized for financial data (e.g., standard Tailwind font-sans mapped to Inter or Geist). Tabular nums (tabular-nums) **MUST** be enforced globally on all numerical outputs to prevent horizontal layout shifting in tables and canvas blocks.  
+* **Color Palette (Semantic Tokens):**  
+  * background & foreground: Standard light/dark mode base.  
+  * primary: Used for primary actions (e.g., "Month Close" execution ).  
+  * muted & muted-foreground: Used extensively in dominated months where projected values are silenced by CSV actuals.  
+  * destructive: Reserved strictly for destructive CSV overwrites and the non-dismissible Uncategorized Suspense warning.  
+  * success: Standard Tailwind green for positive variance indicators.
+
+### **2\. Component Library (Shadcn/UI "Lego Bricks")**
+
+The application **MUST** be composed exclusively of the following Shadcn/UI primitives to maintain rigid consistency and accelerate frontend delivery:
+
+* **Card:** The fundamental container for the visual canvas of Building Blocks.  
+* **Select / Dropdown Menu:** **MUST** be used for the dropdown-based dependency system linking parent and child blocks. Visual connectors (arrows) are explicitly out of scope.  
+* **Table:** The core component for the output dashboard's month-by-month financial table.  
+* **Dialog (Modal):** **MUST** be utilized for the Diff View confirmation step required before executing a Month Close that overwrites previously closed data.  
+* **Alert / Alert Dialog:** Used for critical system warnings, such as the multi-currency hard block or duplicate CSV detection quarantine.  
+* **Switch (Toggle):** Used for the What-If Mode block toggles (on/off) running locally in the browser.  
+* **Checkbox:** Used during the auto-mapping assistance phase where users must explicitly opt-in to category assignments.
+
+### **3\. File System & Routing Structure (Next.js 14+ App Router)**
+
+The directory structure **MUST** utilize Route Groups to separate authentication from the core application context. The active workspace and scenario are the fundamental organizing principles of the URL hierarchy.
+
+Plaintext
+
+app/  
+├── (auth)/  
+│   ├── login/page.tsx  
+│   └── register/page.tsx  
+├── (app)/  
+│   ├── layout.tsx                     \# Injects UserContextDTO, persistent sidebar \[cite: 138, 255\]  
+│   └── workspace/\[workspaceId\]/  
+│       ├── layout.tsx                 \# Loads active workspace context  
+│       ├── page.tsx                   \# Redirects to default active baseline scenario \[cite: 298\]  
+│       ├── scenarios/  
+│       │   ├── \[scenarioId\]/  
+│       │   │   ├── layout.tsx         \# Injects ScenarioDTO & BlockDTOs \[cite: 315, 324\]  
+│       │   │   ├── page.tsx           \# The Projection Canvas & Building Blocks \[cite: 75, 78\]  
+│       │   │   └── dashboard/page.tsx \# Output Dashboard (Runway Chart & Financial Table) \[cite: 165, 168\]  
+│       ├── import/  
+│       │   └── page.tsx               \# CSV Ingestion & Mapping Wizard \[cite: 40, 54\]  
+│       └── actuals/  
+│           ├── page.tsx               \# Draft/Closed state management \[cite: 39\]  
+│           └── \[monthId\]/page.tsx     \# Month Close execution & Health Score review \[cite: 156, 163\]
+
+## **Phase 2: Vertical UI Specification \- The Projection Canvas**
+
+We will begin by defining the core workspace of the application: **The Projection Canvas**. This is the primary interface where founders build their forward-looking financial model.
+
+### **1\. UX Mental Model & Journey**
+
+The Canvas must feel like a visual, structured, and formula-free timeline. Users do not write raw formulas; instead, they add discrete "Building Blocks" representing business activities (e.g., hiring a role, adding a marketing budget). The user journey involves creating these blocks, configuring their specific variables in a property panel, and explicitly linking them via dropdown-based dependencies. Because real-time recalculation of deep dependency chains is out of scope for V1, the mental model must establish a rhythm of "configure \-\> apply \-\> calculate" with explicit system feedback.
+
+### **2\. Route & Component Tree**
+
+**Route:** (app)/workspace/\[workspaceId\]/scenarios/\[scenarioId\]/page.tsx
+
+The DOM structure **MUST** strictly adhere to the ScenarioDTO and BlockDTO contracts.
+
+* ScenarioCanvasLayout  
+  * GlobalAssumptionsSidebar  
+    * AssumptionInputRow \<- Mapped to \-\> ScenarioDTO.globalAssumptions\[key\]  
+  * CanvasArea  
+    * InactivesTray \<- Mapped to \-\> ScenarioDTO.blocks (filtered where isActive \=== false)  
+    * BlockList \<- Mapped to \-\> ScenarioDTO.blocks (filtered where isActive \=== true)  
+      * BlockCard (Shadcn Card)  
+        * BlockHeader  
+          * BlockTitle \<- Mapped to \-\> BlockDTO.type (e.g., 'Personnel', 'Revenue')  
+          * BlockToggle (Shadcn Switch) \<- Mapped to \-\> BlockDTO.isActive  
+        * BlockPropertyPanel  
+          * DynamicInputRow \<- Mapped to \-\> BlockDTO.properties\[key\]  
+          * DependencySelect (Shadcn Select) \<- Mapped to \-\> BlockDTO.properties.referenceId (Internal mapping logic)
+
+### **3\. Interaction & Mutation Schema (The Bridge)**
+
+Every interaction on the canvas maps to a strict Server Action and Zod schema. What-If toggles operate locally before applying.
+
+* **Action:** Add New Block  
+  * **Trigger:** Click "Add Block" button.  
+  * **Server Action:** createBlockMutation  
+  * **Zod Schema:** CreateBlockSchema (Validates type enum: 'Personnel', 'Revenue', 'Marketing', 'OpEx', 'Capital' and properties object).  
+* **Action:** Soft Disable Block (What-If Mode)  
+  * **Trigger:** Toggle BlockToggle switch off.  
+  * **State:** Temporarily mutates local URL Search Params (e.g., ?inactiveBlocks=blk\_998877). Does NOT persist to DB immediately.  
+  * **Server Action (on Apply):** updateScenarioBlocksMutation (updates BlockDTO.isActive to false).  
+* **Action:** Configure Dependency  
+  * **Trigger:** Select a parent block from the DependencySelect dropdown.  
+  * **Validation:** Graph validation MUST run prior to selection. Downstream blocks MUST be rendered as disabled in the dropdown options to prevent circular dependencies.  
+* **Action:** Delete Parent Block  
+  * **Trigger:** Click "Delete" on a block.  
+  * **Validation:** Action is **FORBIDDEN** and blocked by the UI if the block has dependent Child Blocks or projected future impacts. User must unlink downstream cascade first.
+
+### **4\. Finite State Machine (FSM)**
+
+* **Loading (Initial):** CanvasArea MUST render Shadcn Skeleton cards matching the average height of BlockCard components.  
+* **Loading (Recalculation):** When a block is edited, toggled, or a dependency is changed, the UI MUST trigger a synchronous lock over the canvas with a full-screen or container-level 1–2 second loading Spinner.  
+* **Error (Circular Dependency):** If a user attempts to force a circular connection, the dropdown MUST snap-back to the previous state and trigger a Shadcn Toast with a destructive variant.  
+* **Empty State:** If the workspace has no blocks and no starting\_cash\_balance, the canvas MUST be completely locked. The UI MUST display a mandatory input overlay for "Starting Cash Balance".
+
+### **5\. Microcopy Table**
+
+| UI Element | Component Type | Exact Copy |
+| :---- | :---- | :---- |
+| Empty State Prompt | Dialog / Card | "Set your Starting Cash Balance to unlock the canvas." |
+| Global Variables Header | Sidebar Title | "Global Assumptions" |
+| Add Block Button | Button (Primary) | "Add Block" |
+| Inactives Tray Label | Accordion / Header | "Inactive Projections" |
+| Recalculating Overlay | Spinner \+ Text | "Recalculating model..." |
+| Circular Error | Toast (Destructive) | "Circular dependency detected. This connection is not allowed." |
+| Deletion Guard Error | Toast (Destructive) | "Cannot delete block. Please remove downstream dependencies first." |
+
+---
+
+## **Phase 2: Vertical UI Specification \- The Output Dashboard**
+
+### **1\. UX Mental Model & Journey**
+
+The Output Dashboard is the synthesized "source of truth." While the Canvas is for *building* the model, the Dashboard is for *consuming* the results. The mental model is a traditional financial statement combined with a visual runway burn-down chart. Users will toggle between timeframes (e.g., Monthly vs. Quarterly) and compare projected metrics against historical actuals (once a month is closed). The UI **MUST** clearly visually delineate future projections from closed historical actuals.
+
+### **2\. Route & Component Tree**
+
+**Route:** (app)/workspace/\[workspaceId\]/scenarios/\[scenarioId\]/dashboard/page.tsx
+
+The structure relies heavily on the aggregated data output. Tabular data **MUST** use tabular-nums in Tailwind to prevent horizontal shifting.
+
+* DashboardLayout  
+  * DashboardHeader  
+    * TimeframeToggle (Shadcn Tabs or ToggleGroup) \<- Mapped to \-\> URL Search Params ?timeframe=monthly|quarterly|annual  
+  * RunwayChartCard (Shadcn Card)  
+    * ChartContainer \<- Mapped to \-\> ScenarioDTO.projectedCashBalance array  
+    * RunwayIndicator \<- Mapped to \-\> ScenarioDTO.runwayMonths  
+  * FinancialDataCard (Shadcn Card)  
+    * FinancialTable (Shadcn Table)  
+      * TableHeaderRow  
+        * MonthHeader \<- Mapped to \-\> ScenarioDTO.months\[i\].label  
+      * TableBody  
+        * RevenueSection \<- Mapped to \-\> ScenarioDTO.financials.revenue  
+        * OpExSection \<- Mapped to \-\> ScenarioDTO.financials.opex  
+        * NetBurnRow \<- Mapped to \-\> ScenarioDTO.financials.netBurn  
+        * EndingCashRow \<- Mapped to \-\> ScenarioDTO.financials.endingCash
+
+### **3\. Interaction & Mutation Schema (The Bridge)**
+
+This view is predominantly read-only. State is driven entirely by URL parameters to ensure the dashboard can be shared with investors or stakeholders as a direct link.
+
+* **Action:** Change Timeframe Resolution  
+  * **Trigger:** Click "Quarterly" on the TimeframeToggle.  
+  * **State Mutation:** Updates URL to ?timeframe=quarterly.  
+  * **Data Fetching:** React Query detects URL change, triggers a re-fetch or re-aggregation of the ScenarioDTO data on the client if raw monthly data is already cached. Server Actions are NOT required for this read-only transformation.  
+* **Action:** Export to CSV (Optional Utility)  
+  * **Trigger:** Click "Export Data" button.  
+  * **Server Action:** exportScenarioData  
+  * **Zod Schema:** ExportRequestSchema (Validates scenarioId and timeframe).
+
+### **4\. Finite State Machine (FSM)**
+
+* **Loading (Initial):** The page **MUST** display a large Shadcn Skeleton for the chart area and a series of row Skeleton elements for the FinancialTable.  
+* **Loading (Timeframe Switch):** If the client-side aggregation takes longer than 300ms, a subtle opacity transition (e.g., opacity-50) **SHOULD** be applied to the table with a localized Shadcn Spinner overlay.  
+* **Error (Data Fetch Failure):** Display a Shadcn Alert (Destructive) indicating the projection engine failed to compile the results, with a "Retry Calculation" button to trigger a React Query invalidation.  
+* **Empty State:** If the model has no blocks and no starting cash balance, the dashboard **MUST** display an empty state Card directing the user back to the Canvas.
+
+### **5\. Microcopy Table**
+
+| UI Element | Component Type | Exact Copy |
+| :---- | :---- | :---- |
+| Runway Metric Label | Typography (Muted) | "Projected Runway" |
+| Zero Runway Warning | Badge (Destructive) | "Cash Out" |
+| Monthly Toggle | ToggleGroupItem | "Monthly" |
+| Quarterly Toggle | ToggleGroupItem | "Quarterly" |
+| Historical Data Marker | Column Header Badge | "Actuals" |
+| Projected Data Marker | Column Header Badge | "Projected" |
+| Empty State CTA | Button (Primary) | "Build Model in Canvas" |
+
+---
+
+## 
+
+## **Phase 2: Vertical UI Specification \- CSV Ingestion & Mapping Wizard**
+
+### **1\. UX Mental Model & Journey**
+
+The CSV Ingestion flow is the critical bridge between the founder's theoretical projection and their actual bank reality. The mental model is a "Triage Pipeline." Users upload their accounting export, the system auto-maps recognized transactions to existing Building Blocks, and the user must manually triage the remaining "Uncategorized" items. Because V1 strictly enforces single-currency (USD), the system **MUST** aggressively reject multi-currency files upfront. The user journey is: Upload \-\> Review Auto-Mappings \-\> Resolve Suspense Items \-\> Commit to a Draft Month.
+
+### **2\. Route & Component Tree**
+
+**Route:** (app)/workspace/\[workspaceId\]/import/page.tsx
+
+The DOM structure **MUST** explicitly map to the ImportCsvSchema and the resulting HistoricalRecordDTO arrays.
+
+* ImportWizardLayout  
+  * UploadSection (Visible when no file is parsed)  
+    * FileDropzone (Shadcn Card \+ native \<input type="file"\>) \<- Mapped to \-\> ImportCsvSchema.fileData  
+  * MappingTriageSection (Visible post-upload)  
+    * TriageHeader  
+      * SuspenseCounter (Shadcn Badge) \<- Mapped to \-\> Count of HistoricalRecordDTO where isSuspense \=== true  
+      * FilterToggle (Shadcn Tabs) \<- Mapped to \-\> URL Search Params ?filter=all|suspense|mapped  
+    * TransactionTable (Shadcn Table)  
+      * TransactionRow \<- Mapped to \-\> HistoricalRecordDTO  
+        * DateCell \<- Mapped to \-\> HistoricalRecordDTO.date  
+        * DescriptionCell \<- Mapped to \-\> HistoricalRecordDTO.description  
+        * AmountCell \<- Mapped to \-\> HistoricalRecordDTO.amount (Tabular nums enforced)  
+        * CategorySelect (Shadcn Select) \<- Mapped to \-\> HistoricalRecordDTO.accountName  
+    * CommitActions  
+      * CommitButton (Shadcn Button)
+
+### **3\. Interaction & Mutation Schema (The Bridge)**
+
+Data manipulation during triage happens in local component state (via React Hook Form or standard React state) before being committed in bulk. Storing the parsed CSV array in Zustand or Context is strictly **FORBIDDEN**.
+
+* **Action:** File Upload & Initial Parse  
+  * **Trigger:** User drops file into FileDropzone.  
+  * **Server Action:** parseCsvMutation  
+  * **Zod Schema:** ImportCsvSchema (Strict validation: currency **MUST** be 'USD'. Rejects file otherwise).  
+* **Action:** Change Transaction Category  
+  * **Trigger:** User selects a new category from CategorySelect for a specific row.  
+  * **State Mutation:** Updates the local React state array for that specific HistoricalRecordDTO, toggling isSuspense to false if a valid category is selected.  
+* **Action:** Filter Transactions  
+  * **Trigger:** User clicks "Uncategorized" in the FilterToggle.  
+  * **State Mutation:** Updates URL to ?filter=suspense. UI derives visible rows based on this URL parameter.  
+* **Action:** Commit Mapped Month  
+  * **Trigger:** Click "Save as Draft Month".  
+  * **Server Action:** commitDraftMonthMutation  
+  * **Zod Schema:** Array of HistoricalRecordDTO.  
+  * **Validation:** If any records still have isSuspense \=== true, the system **MUST** present a confirmation dialog warning the user that these will be tracked as uncategorized burn.
+
+### **4\. Finite State Machine (FSM)**
+
+* **Empty State (Initial):** Show the UploadSection with clear drag-and-drop affordances. The MappingTriageSection is completely unmounted.  
+* **Loading (Parsing):** Display a Shadcn Progress bar or Spinner within the dropzone indicating file processing and auto-matching.  
+* **Error (Currency Block):** If ImportCsvSchema fails the USD validation, render a Shadcn Alert (Destructive) with the exact message: "V1 is strictly single-currency. Please normalize externally." The file processing **MUST** halt immediately.  
+* **Optimistic UI (Categorization):** When a user changes a category via CategorySelect, the UI **MUST** immediately update the row visually (removing the warning styling) and decrement the SuspenseCounter without waiting for a server round-trip.
+
+### **5\. Microcopy Table**
+
+| UI Element | Component Type | Exact Copy |
+| :---- | :---- | :---- |
+| Upload Dropzone | Card / Text | "Drag and drop your bank or accounting CSV here" |
+| Format Requirement | Typography (Muted) | "Supported: .csv (USD only)" |
+| Currency Error | Alert (Destructive) | "V1 is strictly single-currency. Please normalize externally." |
+| Suspense Filter Tab | TabsTrigger | "Needs Review" |
+| Mapped Filter Tab | TabsTrigger | "Categorized" |
+| Uncategorized Warning | DialogHeader | "You have uncategorized transactions." |
+| Uncategorized Context | DialogDescription | "Items left in suspense will simply reduce your cash balance without being assigned to a specific projection block. Proceed?" |
+| Commit Action | Button (Primary) | "Save as Draft Month" |
+
+---
+
+## **Phase 2: Vertical UI Specification \- Month Close & Health Score Review**
+
+### **1\. UX Mental Model & Journey**
+
+This is the "Moment of Truth" in the P3 engine. The founder has triaged their bank data (Draft Month) and is now comparing what they *projected* against what actually *happened*. The mental model is an "Accountability Report." The system displays a side-by-side variance analysis and calculates a Health Score based on accuracy.
+
+Crucially, the user journey ends with a high-friction action: The "Month Close." Closing a month is a destructive action that overwrites the theoretical projection for that specific month with the hard actuals from the CSV. Because V1 does not support Hard Restatements (reopening closed months), this action **MUST** be gated behind a strict confirmation flow (Diff View). Once closed, the page transitions into a read-only historical artifact.
+
+### **2\. Route & Component Tree**
+
+**Route:** (app)/workspace/\[workspaceId\]/actuals/\[monthId\]/page.tsx
+
+The DOM structure **MUST** explicitly map to the Monthly Period DTOs and the aggregated variance data. Tabular layouts **MUST** use tabular-nums.
+
+* MonthCloseLayout  
+  * MonthHeader  
+    * MonthTitle \<- Mapped to \-\> MonthlyPeriodDTO.monthLabel  
+    * StatusBadge (Shadcn Badge) \<- Mapped to \-\> MonthlyPeriodDTO.status ('Draft' | 'Closed')  
+  * HealthScoreCard (Shadcn Card)  
+    * ScoreDisplay \<- Mapped to \-\> MonthlyPeriodDTO.healthScore  
+    * VarianceSummary \<- Mapped to \-\> Aggregated Projected vs Actual totals  
+  * VarianceTable (Shadcn Table)  
+    * TableHeader (Category, Projected, Actual, Variance)  
+    * TableBody  
+      * VarianceRow \<- Mapped to \-\> Joined BlockDTO (Projection) and HistoricalRecordDTO (Actual)  
+        * BlockNameCell \<- Mapped to \-\> BlockDTO.type  
+        * ProjectedCell \<- Mapped to \-\> Calculated Block Value  
+        * ActualCell \<- Mapped to \-\> Sum of HistoricalRecordDTO.amount for category  
+        * DeltaCell \<- Mapped to \-\> Actual \- Projected  
+  * CloseActionSection (Rendered only if status \=== 'Draft')  
+    * DiffReviewDialog (Shadcn Dialog / Modal)  
+      * DiffSummary \<- Mapped to \-\> Delta of StartingCash vs EndingCash  
+      * ConfirmCloseButton (Shadcn Button \- Primary/Destructive hybrid)
+
+### **3\. Interaction & Mutation Schema (The Bridge)**
+
+This view handles the highest-stakes mutation in the application.
+
+* **Action:** Open Diff Review  
+  * **Trigger:** Click "Review & Close Month" button.  
+  * **State:** Local component state opens the DiffReviewDialog. No server mutation yet.  
+* **Action:** Execute Month Close  
+  * **Trigger:** Click "Confirm & Lock Month" inside the Dialog.  
+  * **Server Action:** closeMonthMutation  
+  * **Zod Schema:** CloseMonthRequestSchema (Validates monthId and explicit userConfirmation: z.literal(true)).  
+  * **Post-Mutation:** React Query invalidates the scenario data, triggering a re-fetch. The UI transitions to the 'Closed' read-only state.  
+* **Action:** Ignore Variance (Optional Utility)  
+  * **Trigger:** Toggle "Ignore Variance" on a specific VarianceRow (e.g., for a one-off anomaly that shouldn't impact future projections).  
+  * **Server Action:** updateVarianceSettingMutation  
+  * **Zod Schema:** UpdateVarianceSchema (Updates ignoreVariance boolean).
+
+### **4\. Finite State Machine (FSM)**
+
+* **Loading:** Display a full-page layout of Shadcn Skeleton blocks matching the HealthScoreCard and VarianceTable dimensions while React Query fetches the aggregated comparison.  
+* **Error (Out of Order Close):** If the user attempts to close a month while previous months remain in 'Draft' status, the Server Action **MUST** reject the request. The UI **MUST** display a Shadcn Alert (Destructive) stating: "Months must be closed chronologically. Please close \[Previous Month\] first." The Close button **MUST** be disabled.  
+* **State: Draft (Interactive):** CloseActionSection is active. Variances are highlighted (red/green based on positive/negative burn impact).  
+* **State: Closed (Read-Only):** The CloseActionSection unmounts entirely. The StatusBadge changes to a muted 'Closed'. A prominent informational Alert **MUST** be rendered at the top stating: "This month is locked and historical. Restatements are not supported in V1."
+
+### **5\. Microcopy Table**
+
+| UI Element | Component Type | Exact Copy |
+| :---- | :---- | :---- |
+| Draft Status | Badge (Default) | "Draft \- Pending Close" |
+| Closed Status | Badge (Muted) | "Locked & Closed" |
+| Health Score Label | Typography | "Projection Accuracy Score" |
+| Chronology Error | Alert (Destructive) | "Months must be closed chronologically. Please close \[Previous Month\] first." |
+| Pre-Close Trigger | Button (Primary) | "Review & Close Month" |
+| Diff Dialog Title | DialogTitle | "Confirm Month Close" |
+| Diff Dialog Warning | DialogDescription | "Closing this month will overwrite your projections with actual bank data and lock the period. This cannot be undone in V1. Do you wish to proceed?" |
+| Final Confirm Action | Button (Destructive) | "Confirm & Lock Month" |
+| Read-Only Notice | Alert (Info) | "This month is locked and historical. Restatements are not supported in V1." |
+
+---
+
+## **Phase 2: Vertical UI Specification \- Authentication & Global Navigation Shell**
+
+### **1\. UX Mental Model & Journey**
+
+The authentication flow **MUST** be a frictionless, high-conversion entry point. Because V1 strictly targets single-user accounts (no multi-seat/enterprise features), the mental model is a direct 1:1 relationship between the user and their workspace. Upon successful login or registration, the system bypasses complex tenant-switching and routes the user directly into their default Workspace and active Scenario.
+
+The Global Navigation Shell (Sidebar) serves as the persistent anchor for the application. It visually reinforces the three primary phases of the P3 workflow: 1\. Build (Canvas), 2\. Triage (Import), 3\. Review (Dashboard & Actuals).
+
+### **2\. Route & Component Tree**
+
+**Routes:** \* (auth)/login/page.tsx & (auth)/register/page.tsx
+
+* (app)/layout.tsx (Injects the Global Navigation)
+
+The DOM structure relies on standard Shadcn form primitives and a responsive layout wrapper.
+
+* AuthLayout (Centered flex container, bg-muted background)  
+  * AuthCard (Shadcn Card)  
+    * AuthHeader (Logo and Title)  
+    * LoginForm OR RegisterForm (Shadcn Form)  
+      * EmailInput \<- Mapped to \-\> UserDTO.email  
+      * PasswordInput \<- Mapped to \-\> (Internal auth handler)  
+      * SubmitButton (Shadcn Button)  
+* AppLayout (Rendered post-auth)  
+  * GlobalSidebar (Fixed aside on desktop, Shadcn Sheet on mobile)  
+    * WorkspaceHeader \<- Mapped to \-\> OrganizationDTO.name  
+    * NavigationMenu  
+      * NavItem (Canvas) \<- Links to \-\> .../scenarios/\[scenarioId\]  
+      * NavItem (Dashboard) \<- Links to \-\> .../scenarios/\[scenarioId\]/dashboard  
+      * NavItem (Import CSV) \<- Links to \-\> .../import  
+      * NavItem (Actuals History) \<- Links to \-\> .../actuals  
+    * UserProfileFooter  
+      * UserMenu (Shadcn DropdownMenu) \<- Mapped to \-\> UserDTO.first\_name  
+  * MainContentArea (Yields children routes)
+
+### **3\. Interaction & Mutation Schema (The Bridge)**
+
+Authentication state **MUST** be handled via secure HTTP-only cookies managed by the Next.js server, not local storage or global client state.
+
+* **Action:** Submit Login / Registration  
+  * **Trigger:** Click "Sign In" or "Create Account".  
+  * **Server Action:** loginMutation or registerMutation  
+  * **Zod Schema:** AuthCredentialsSchema (Validates email format and strict password strength).  
+  * **Post-Mutation:** Server sets secure session cookie and triggers redirect('/workspace/\[defaultWorkspaceId\]').  
+* **Action:** Logout  
+  * **Trigger:** Select "Log out" from UserMenu.  
+  * **Server Action:** logoutAction (Destroys session cookie, redirects to /login).  
+* **Action:** Mobile Sidebar Toggle  
+  * **Trigger:** Click Hamburger icon (mobile only).  
+  * **State Mutation:** Toggles local boolean state to open Shadcn Sheet. This is an acceptable use of local React state as it is an ephemeral UI preference, not domain data.
+
+### **4\. Finite State Machine (FSM)**
+
+* **Loading (Auth Submit):** The SubmitButton **MUST** disable and display a Shadcn Spinner inline with the button text to prevent duplicate submissions.  
+* **Error (Invalid Credentials):** If the loginMutation fails, the Server Action returns an error object. The UI **MUST** display this via a Shadcn Alert (Destructive) positioned at the top of the AuthCard, pushing the form down. Inline field errors (e.g., "Invalid email format") **MUST** be handled synchronously by Zod resolver before hitting the server.  
+* **Empty State (Workspace Initialization):** If a user registers but the backend fails to provision the default organizations row, the AppLayout **MUST** intercept the missing OrganizationDTO and display a full-screen blocking Card prompting the user to "Name your Workspace" via a createWorkspaceMutation.
+
+### **5\. Microcopy Table**
+
+| UI Element | Component Type | Exact Copy |
+| :---- | :---- | :---- |
+| Login Heading | CardTitle | "Welcome back to P3" |
+| Registration Heading | CardTitle | "Start Modeling Your Runway" |
+| Email Label | FormLabel | "Work Email" |
+| Auth Error Banner | Alert (Destructive) | "Invalid email or password. Please try again." |
+| Sidebar: Build Phase | NavLabel (Muted) | "MODELING" |
+| Sidebar: Canvas Link | NavLink | "Projection Canvas" |
+| Sidebar: Output Link | NavLink | "Runway Dashboard" |
+| Sidebar: Reality Phase | NavLabel (Muted) | "ACTUALS" |
+| Sidebar: Import Link | NavLink | "Import Bank CSV" |
+| Sidebar: History Link | NavLink | "Month Close & History" |
+
+---
+
+## **Phase 2: Vertical UI Specification \- Period Management & History**
+
+### **1\. UX Mental Model & Journey**
+
+The Period Management page acts as the founder's "Financial Ledger" or "Archive." While the \[monthId\] route is for the high-friction *action* of closing a month, this root /actuals page is the macro *view* of their track record. The mental model is a chronological timeline of performance.
+
+Users come here to do two things: 1\. Find the current pending 'Draft' month to resume their triage/close process, or 2\. Review historical 'Closed' months to observe trends in their Projection Health Scores. The UI **MUST** clearly differentiate actionable drafts from locked historical records.
+
+### **2\. Route & Component Tree**
+
+**Route:** (app)/workspace/\[workspaceId\]/actuals/page.tsx
+
+The DOM structure maps to an array of MonthlyPeriodDTO objects. To support scannability, we will utilize a tabular or list-based layout with strict tabular-nums for any aggregated metrics.
+
+* PeriodManagementLayout  
+  * PageHeader  
+    * Title (Typography H2)  
+    * FilterToggle (Shadcn Tabs or Select) \<- Mapped to \-\> URL Search Params ?filter=all|draft|closed  
+  * PeriodList (Shadcn Table or stacked Card list)  
+    * PeriodRow \<- Mapped to \-\> MonthlyPeriodDTO (Array mapping)  
+      * MonthCell \<- Mapped to \-\> MonthlyPeriodDTO.monthLabel  
+      * StatusCell  
+        * StatusBadge (Shadcn Badge) \<- Mapped to \-\> MonthlyPeriodDTO.status  
+      * HealthScoreCell \<- Mapped to \-\> MonthlyPeriodDTO.healthScore  
+      * ActionCell  
+        * MapsButton (Shadcn Button \- Variant: Ghost/Link) \<- Routes to \-\> /actuals/\[periodId\]
+
+### **3\. Interaction & Mutation Schema (The Bridge)**
+
+This view is primarily a read-only navigation hub. State is driven by URL parameters.
+
+* **Action:** Filter Periods  
+  * **Trigger:** User selects 'Drafts Only' or 'Closed History' from the FilterToggle.  
+  * **State Mutation:** Updates URL to ?filter=draft or ?filter=closed.  
+  * **Data Fetching:** React Query re-filters the cached array of MonthlyPeriodDTOs or fetches the updated list if not cached.  
+* **Action:** Navigate to Period Detail  
+  * **Trigger:** Click on a specific PeriodRow or its MapsButton.  
+  * **Routing:** standard Next.js \<Link\> component pushes the user to the \[monthId\] route. No server mutation required.
+
+### **4\. Finite State Machine (FSM)**
+
+* **Loading:** Render a series of Shadcn Skeleton rows matching the height of the PeriodRow components.  
+* **Empty State (No Imports Yet):** If the array of MonthlyPeriodDTO is completely empty, the system **MUST** render a Shadcn Card containing an empty state illustration/icon, explaining that history begins once bank data is imported. It **MUST** include a primary CTA button routing to the /import page.  
+* **Empty State (Filter Yields No Results):** If the user filters by ?filter=draft but all months are closed, display a muted text message indicating no matching periods, rather than the full "No Imports" card.
+
+### **5\. Microcopy Table**
+
+| UI Element | Component Type | Exact Copy |
+| :---- | :---- | :---- |
+| Page Title | Typography | "Financial History & Actuals" |
+| Filter: All | TabsTrigger | "All Periods" |
+| Filter: Drafts | TabsTrigger | "Pending Close" |
+| Filter: Closed | TabsTrigger | "Historical" |
+| Draft Badge | Badge (Default) | "Draft" |
+| Closed Badge | Badge (Secondary/Muted) | "Closed" |
+| Empty State Title | CardTitle | "No Financial History Found" |
+| Empty State Body | CardDescription | "Your track record starts here. Import your first CSV of actual bank transactions to generate a draft month and calculate your first health score." |
+| Empty State CTA | Button (Primary) | "Import Bank Data" |
+</file>
+
+<file path="package.json">
+{
+  "name": "p3",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.98.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.577.0",
+    "next": "16.1.6",
+    "radix-ui": "^1.4.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^3.5.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
+    "shadcn": "^3.8.5",
+    "tailwindcss": "^4",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "^5"
+  }
+}
+</file>
+
+<file path="docs/DOMAIN_MODEL.md">
+# **P3: Unified Data & API Contract**
+
+### Phase 1 implementation note
+
+Phase 1 (Walking Skeleton) uses **Supabase Auth** for sign-in, sign-up, forgot-password, and session. No `/api/v1/*` routes or UserContextDTO/workspace APIs are implemented yet. The domains and API contracts below remain the source of truth for Phase 2 and beyond.
+
+---
+
+### **Domain 1: The Tenant & Access Domain**
+
+#### **Component 1: Database Schema (The Foundation)**
+
+SQL
+
+\-- PostgreSQL / Prisma Mapping  
+CREATE TABLE users (  
+    id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
+    email VARCHAR(255) UNIQUE NOT NULL,  
+    password\_hash VARCHAR(255) NOT NULL, \-- Never exposed to DTO  
+    first\_name VARCHAR(100) NOT NULL,  
+    last\_name VARCHAR(100) NOT NULL,  
+    created\_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT\_TIMESTAMP  
+);
+
+CREATE TABLE organizations (  
+    id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
+    name VARCHAR(255) NOT NULL,  
+    billing\_email VARCHAR(255),  
+    created\_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT\_TIMESTAMP  
+);
+
+\-- Future-proofing for V2 multi-user \[cite: 20\]  
+CREATE TABLE organization\_members (  
+    id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
+    organization\_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,  
+    user\_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,  
+    role VARCHAR(50) DEFAULT 'owner', \-- 'owner', 'admin', 'viewer'  
+    joined\_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT\_TIMESTAMP,  
+    UNIQUE(organization\_id, user\_id)  
+);
+
+CREATE INDEX idx\_org\_members\_user ON organization\_members(user\_id);
+
+#### **Component 2: Security Policies (The Firewall)**
+
+* **Authentication:** Requires active Bearer token.  
+* **RLS (Row Level Security):** \* users: SELECT, UPDATE strictly limited where id \= auth.uid().  
+  * organizations: SELECT, UPDATE strictly limited to organizations where auth.uid() exists in organization\_members.user\_id. DELETE is locked to role \= 'owner'.
+
+#### **Component 3: API Route Registry & DTOs (The Contract)**
+
+* **GET** /api/v1/workspaces/context \- Retrieves the active user and their authorized organization.
+
+TypeScript
+
+export interface UserContextDTO {  
+  userId: string; // Maps from users.id  
+  fullName: string; // Computed from DB fields: users.first\_name \+ ' ' \+ users.last\_name  
+  email: string; // Maps from users.email  
+  organizationId: string; // Maps from organization\_members.organization\_id  
+  organizationName: string; // Maps from organizations.name  
+  role: string; // Maps from organization\_members.role  
+  joinedAt: string; // Maps from organization\_members.joined\_at (ISO String)  
+}
+
+#### **Component 4: Input Validation (The Guardrails)**
+
+TypeScript
+
+import { z } from 'zod';
+
+export const UpdateOrganizationSchema \= z.object({  
+  name: z.string().min(2, "Organization name must be at least 2 characters").max(255),  
+  billingEmail: z.string().email("Invalid billing email format").optional(),  
+});
+
+#### **Component 5: Static JSON Mock (The Development Artifact)**
+
+JSON
+
+{  
+  "userId": "usr\_9f8e7d6c-5b4a-3f2e-1d0c",  
+  "fullName": "Sarah Connor",  
+  "email": "sarah@skynet-analytics.io",  
+  "organizationId": "org\_1a2b3c4d-5e6f-7a8b-9c0d",  
+  "organizationName": "Skynet Analytics Inc.",  
+  "role": "owner",  
+  "joinedAt": "2026-03-01T14:30:00Z"  
+}
+
+---
+
+### **Domain 2: The Projection Engine Domain**
+
+#### **Component 1: Database Schema (The Foundation)**
+
+SQL
+
+CREATE TABLE workspaces (  
+    id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
+    organization\_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,  
+    name VARCHAR(255) NOT NULL,  
+    starting\_cash\_balance NUMERIC(15, 2) NOT NULL DEFAULT 0.00, \-- Required for Day 1 usability \[cite: 134, 135\]  
+    created\_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT\_TIMESTAMP  
+);
+
+CREATE TABLE scenarios (  
+    id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
+    workspace\_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,  
+    name VARCHAR(255) NOT NULL,  
+    is\_active\_baseline BOOLEAN DEFAULT false,  
+    global\_assumptions JSONB NOT NULL DEFAULT '{}'::jsonb, \-- Stores isolated Churn, Base Price, etc. \[cite: 33, 34\]  
+    created\_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT\_TIMESTAMP  
+);
+
+CREATE TABLE blocks (  
+    id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
+    scenario\_id UUID NOT NULL REFERENCES scenarios(id) ON DELETE CASCADE,  
+    type VARCHAR(50) NOT NULL, \-- 'Personnel', 'Revenue', 'Marketing', 'OpEx', 'Capital' \[cite: 110\]  
+    is\_active BOOLEAN DEFAULT true, \-- Supports "Soft Disable / Inactives Tray" \[cite: 97, 98\]  
+    payload JSONB NOT NULL, \-- Encodes specific assumptions (e.g. salary, start\_month) \[cite: 29\]  
+    created\_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT\_TIMESTAMP  
+);
+
+CREATE INDEX idx\_blocks\_scenario ON blocks(scenario\_id);
+
+#### **Component 2: Security Policies (The Firewall)**
+
+* **RLS Isolation:** Access to workspaces, scenarios, and blocks is implicitly gated by joining the parent workspace.organization\_id against the authenticated user's organization\_members list. Cross-tenant access is physically impossible at the DB query level.
+
+#### **Component 3: API Route Registry & DTOs (The Contract)**
+
+* **GET** /api/v1/scenarios/:id \- Fetches a self-contained Scenario and all its blocks.  
+* **POST** /api/v1/scenarios/:id/duplicate \- Executes a hard clone of the scenario.
+
+TypeScript
+
+export interface BlockDTO {  
+  blockId: string; // Maps from blocks.id  
+  type: 'Personnel' | 'Revenue' | 'Marketing' | 'OpEx' | 'Capital'; // Maps from blocks.type  
+  isActive: boolean; // Maps from blocks.is\_active  
+  properties: Record\<string, any\>; // Maps directly from blocks.payload JSONB \[cite: 29\]  
+}
+
+export interface ScenarioDTO {  
+  scenarioId: string; // Maps from scenarios.id  
+  name: string; // Maps from scenarios.name  
+  globalAssumptions: Record\<string, number\>; // Maps from scenarios.global\_assumptions JSONB \[cite: 33\]  
+  blocks: BlockDTO\[\]; // Joined array of child blocks  
+}
+
+#### **Component 4: Input Validation (The Guardrails)**
+
+TypeScript
+
+export const CreateBlockSchema \= z.object({  
+  type: z.enum(\['Personnel', 'Revenue', 'Marketing', 'OpEx', 'Capital'\]),  
+  isActive: z.boolean().default(true),  
+  properties: z.record(z.any()) // Deep validation handled by domain-specific factory based on 'type'  
+});
+
+#### **Component 5: Static JSON Mock (The Development Artifact)**
+
+JSON
+
+{  
+  "scenarioId": "scn\_a1b2c3d4",  
+  "name": "Aggressive Growth Plan \- Q3",  
+  "globalAssumptions": {  
+    "baseChurnRate": 0.02,  
+    "targetArpa": 499.00  
+  },  
+  "blocks": \[  
+    {  
+      "blockId": "blk\_998877",  
+      "type": "Personnel",  
+      "isActive": true,  
+      "properties": {  
+        "roleName": "Senior Full Stack Engineer",  
+        "monthlyGrossSalary": 12500,  
+        "employerBurdenPercent": 0.20,  
+        "startMonth": "2026-06"  
+      }  
+    }  
+  \]  
+}
+
+---
+
+### **Domain 3: The Financial Actuals & Period Domain**
+
+#### **Component 1: Database Schema (The Foundation)**
+
+SQL
+
+CREATE TABLE chart\_of\_accounts (  
+    id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
+    workspace\_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,  
+    name VARCHAR(255) NOT NULL,  
+    category VARCHAR(50) NOT NULL, \-- 'Revenue', 'COGS', 'OpEx', 'Headcount', 'Suspense' \[cite: 29\]  
+    is\_system\_default BOOLEAN DEFAULT false  
+);
+
+CREATE TABLE monthly\_periods (  
+    id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
+    workspace\_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,  
+    calendar\_month DATE NOT NULL, \-- Stored as YYYY-MM-01  
+    status VARCHAR(20) DEFAULT 'Draft', \-- 'Draft' or 'Closed'   
+    health\_score NUMERIC(5, 2), \-- Computed and frozen on Month Close   
+    ignore\_variance BOOLEAN DEFAULT false, \-- Used for startup month   
+    UNIQUE(workspace\_id, calendar\_month)  
+);
+
+CREATE TABLE historical\_records (  
+    id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
+    monthly\_period\_id UUID NOT NULL REFERENCES monthly\_periods(id) ON DELETE CASCADE,  
+    account\_id UUID REFERENCES chart\_of\_accounts(id), \-- Nullable before mapping  
+    transaction\_date DATE NOT NULL,  
+    amount NUMERIC(15, 2) NOT NULL, \-- Negative amounts subtracted natively \[cite: 63, 64\]  
+    description TEXT,  
+    is\_duplicate\_quarantined BOOLEAN DEFAULT false \-- Forces manual intervention \[cite: 57, 58\]  
+);
+
+#### **Component 2: Security Policies (The Firewall)**
+
+* monthly\_periods and historical\_records strictly inherit the RLS policies of the workspaces they belong to.  
+* **Database Trigger:** A trigger prevents INSERT, UPDATE, or DELETE on historical\_records if the parent monthly\_periods.status is 'Closed' (unless an explicit "re-open" override is passed from the server).
+
+#### **Component 3: API Route Registry & DTOs (The Contract)**
+
+* **GET** /api/v1/workspaces/:id/periods/:month \- Fetches the status and records for a specific month.  
+* **POST** /api/v1/workspaces/:id/periods/:month/close \- Executes the Month Close, freezing the records and computing the Health Score.
+
+TypeScript
+
+export interface HistoricalRecordDTO {  
+  recordId: string; // Maps from historical\_records.id  
+  date: string; // Maps from historical\_records.transaction\_date (YYYY-MM-DD)  
+  amount: number; // Maps from historical\_records.amount  
+  description: string; // Maps from historical\_records.description  
+  accountName: string | null; // Joined from chart\_of\_accounts.name  
+  isSuspense: boolean; // Computed: true if chart\_of\_accounts.category \=== 'Suspense' or unmapped \[cite: 54\]  
+}
+
+export interface MonthlyPeriodDTO {  
+  periodId: string; // Maps from monthly\_periods.id  
+  monthLabel: string; // Computed from monthly\_periods.calendar\_month (e.g., "Mar 2026")  
+  status: 'Draft' | 'Closed'; // Maps from monthly\_periods.status   
+  healthScore: number | null; // Maps from monthly\_periods.health\_score \[cite: 163\]  
+  ignoreVariance: boolean; // Maps from monthly\_periods.ignore\_variance   
+  records: HistoricalRecordDTO\[\]; // Joined array of transactions  
+}
+
+#### **Component 4: Input Validation (The Guardrails)**
+
+TypeScript
+
+export const ImportCsvSchema \= z.object({  
+  fileData: z.string().base64(), // Or multipart form data parser  
+  currency: z.string().length(3).refine(val \=\> val \=== 'USD', "V1 is strictly single-currency. Please normalize externally.") // Enforces strict V1 block \[cite: 60, 61\]  
+});
+
+#### **Component 5: Static JSON Mock (The Development Artifact)**
+
+JSON
+
+{  
+  "periodId": "per\_xyz123",  
+  "monthLabel": "Oct 2026",  
+  "status": "Draft",  
+  "healthScore": null,  
+  "ignoreVariance": true,  
+  "records": \[  
+    {  
+      "recordId": "rec\_001",  
+      "date": "2026-10-15",  
+      "amount": \-450.00,  
+      "description": "Stripe Payout \- Refund",  
+      "accountName": "Revenue",  
+      "isSuspense": false  
+    },  
+    {  
+      "recordId": "rec\_002",  
+      "date": "2026-10-28",  
+      "amount": 12000.00,  
+      "description": "Gusto Payroll",  
+      "accountName": "Headcount",  
+      "isSuspense": false  
+    }  
+  \]  
+}
+
+---
+
+This data structure perfectly isolates the tenant, allows for flexible JSON-driven engine scenarios without heavy DB migrations for new block types, and rigidly enforces the boundaries of actual vs. projected data.
+</file>
+
+<file path=".ai-status.md">
+# AI Status
+
+## Initialized framework versions
+
+- **Next.js:** 16.1.6
+- **React:** 19.2.3
+- **TypeScript:** ^5
+
+docs/ directory created and ready.
+
+## Specification and ground truth
+
+- **Task 0.2:** Complete  
+- All specification files in `docs/` have been read: `ARCHITECTURE.md`, `FUNCTIONAL_SPEC.md`, `DOMAIN_MODEL.md`, `UX_SPEC.md`, `API_CONTRACT.md`.
+- Ground truth for Data Contracts, UX, and Architecture is established via these canonical docs (read-only source of truth for development).
+
+## Phase 1: COMPLETE
+
+Phase 1 (Walking Skeleton) is complete. Landing page, auth loop (login, signup, forgot-password), protected dashboard shell with sidebar, guest route, Supabase-backed session, and middleware enforcement are implemented and verified. See **docs/ARCHITECTURE.md** for the current app router structure and **docs/DOMAIN_MODEL.md** for Phase 1 implementation notes.
+
+## CURRENT_ARCHITECTURE_SNAPSHOT
+
+The active Walking Skeleton uses the Next.js App Router with three route groups. **Public:** `/` (landing teaser). **Auth** `(auth)`: `/login`, `/signup`, `/forgot-password` with Server Actions and Supabase; centered full-screen layout. **Dashboard** `(dashboard)`: `/dashboard`, `/assets`, `/airlock`, `/vault`, `/governance`, `/settings`; single layout with Sidebar (from `@/components/ui/sidebar`), top header, and scrollable main content. **Guest** `(guest)`: `/guest/view` for time-boxed access. Middleware (`src/middleware.ts`) protects dashboard and guest routes and redirects unauthenticated users to `/login`; authenticated users hitting `/` or `/login` are redirected to `/dashboard`. Root layout wraps the app in `AuthProvider` (React Context for `session` and `isLoading` via `useAuth()`). No `/api/v1/*` or workspace/scenario routes yet; those are Phase 2+.
+
+## Scaffolding Phase — Complete
+
+### Design tokens
+
+- **Colors**
+  - **Main background:** Soft off-white — `bg-background` (CSS var `--background`: slate-50 OKLCH).
+  - **Elevated components:** Pure white — `bg-card`, `bg-popover` (CSS vars `--card`, `--popover`: white).
+  - **Borders:** Subtle — `border-border` (CSS var `--border`: slate-200 OKLCH).
+  - **Primary action:** Deep navy — `bg-primary`, `text-primary` (CSS var `--primary`: slate-900 OKLCH).
+- **Typography**
+  - **Sans:** Geist Sans via `--font-geist-sans`; body uses `font-sans`.
+  - **Numerical alignment:** Use Tailwind utility `tabular-nums` for financial/numerical data.
+
+### Shadcn UI components (available)
+
+- `components/ui/button.tsx`
+- `components/ui/input.tsx`
+- `components/ui/card.tsx`
+
+## Route groups (Public / Authenticated / Guest)
+
+Route groups isolate session-dependent experiences; layouts are pass-through and establish boundaries only.
+
+### App router file tree
+
+```
+app/
+├── layout.tsx              # Root layout (fonts, globals)
+├── page.tsx                # Landing /
+├── globals.css
+├── favicon.ico
+├── (auth)/                 # Public: login, signup, forgot-password
+│   ├── layout.tsx
+│   ├── login/
+│   │   └── page.tsx        # /login
+│   ├── signup/
+│   │   └── page.tsx        # /signup
+│   └── forgot-password/
+│       └── page.tsx        # /forgot-password
+├── (dashboard)/            # Authenticated
+│   ├── layout.tsx
+│   ├── dashboard/
+│   │   └── page.tsx        # /dashboard
+│   ├── assets/
+│   │   └── page.tsx        # /assets
+│   ├── airlock/
+│   │   └── page.tsx        # /airlock
+│   ├── vault/
+│   │   └── page.tsx        # /vault
+│   ├── governance/
+│   │   └── page.tsx        # /governance
+│   └── settings/
+│       └── page.tsx        # /settings
+└── (guest)/                # Time-boxed external
+    ├── layout.tsx
+    └── guest/
+        └── view/
+            └── page.tsx    # /guest/view
+```
+
+### Route inventory (from PRD / specs)
+
+| Experience   | Route group   | Paths |
+|-------------|---------------|-------|
+| Public (auth) | `(auth)`      | `/login`, `/signup`, `/forgot-password` |
+| Authenticated (dashboard) | `(dashboard)` | `/dashboard`, `/assets`, `/airlock`, `/vault`, `/governance`, `/settings` |
+| Guest (time-boxed) | `(guest)` | `/guest/view` |
+
+Verification: `node verify_routing.mjs`
+
+### Task 0.4 — QA & regression (passed)
+
+- **Structural validation:** `node verify_routing.mjs` — all required Route Groups `(auth)`, `(dashboard)`, `(guest)` exist; each has `layout.tsx` and the correct nested `page.tsx` skeletons with default export and `<h1>`.
+- **Compilation:** `npm run build` completes successfully; no missing default exports or layout misconfiguration. All 13 routes compile and prerender.
+
+## Cloud & environment
+
+- **Cloud configuration:** Successful. Backend and deployment targets are configured and reachable.
+- **Environment variables:** Securely established (e.g. via platform secrets / `.env` exclusions); no secrets committed to the repository.
+
+## Task 0.6 — Repomix context optimization (complete)
+
+- **repomix.config.json** is configured and active in the project root.
+- **Ignore patterns:** `.next/`, `node_modules/`, `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml` are explicitly excluded to avoid context dilution from build artifacts and lock files.
+- **Top-priority context:** `output.topFiles` includes `.ai-status.md` and `docs/` so architectural documents and memory state are prioritized in packed output.
+- Verification: `node verify_repomix_config.mjs`
+
+## Phase 1.1 — Layout shell & navigation
+
+### Task 1.1 :: The Layout Shell & Navigation UI — Complete
+
+- **Auth layout:** `app/(auth)/layout.tsx` — centered flex shell (`h-screen w-screen flex flex-col items-center justify-center bg-slate-50`), renders `children`. Server Component.
+- **Dashboard layout:** `app/(dashboard)/layout.tsx` — app shell (flex h-screen bg-slate-50), Sidebar + MainContentArea (TopHeader, ScrollableContent with `children`). Sidebar imported from `@/components/ui/sidebar`.
+- **Sidebar:** `components/ui/sidebar.tsx` — Client Component with `usePathname` for active-route highlighting, Lucide icons, and Logout placeholder at bottom.
+- **Dynamic application routes wired up (resolving roadmap discrepancy):** Sidebar navigation links point exclusively to:
+  - `/dashboard` (Dashboard)
+  - `/assets` (Portfolio/Assets)
+  - `/airlock` (Airlock)
+  - `/vault` (Vault)
+  - `/governance` (Governance)
+  - `/settings` (Settings)
+- Verification: `node test/verify_task_1_1.mjs`
+
+## Phase 1.2 — Auth loop (complete)
+
+### Supabase/Resend Auth loop & global session state
+
+- **Log In (`/login`):** Server Action `loginAction` calls `supabase.auth.signInWithPassword`; on success redirects to `/dashboard`, on failure returns generic "Invalid email or password". UI: Shadcn `Button`, `Input`, `useActionState` for errors.
+- **Sign Up (`/signup`):** Server Action `signUpAction` calls `supabase.auth.signUp`; redirects to `/login` after signup. Data contract: User table row must be created via DB trigger or post-signup hook.
+- **Forgot Password (`/forgot-password`):** Server Action `forgotPasswordAction` calls `supabase.auth.resetPasswordForEmail`; minimalist flow with success message.
+- **Log Out:** Sidebar logout button submits form with Server Action `logoutAction`; calls `supabase.auth.signOut()` and redirects to `/login`.
+- **Session state:** `AuthProvider` (root layout) consumes Supabase browser client, fetches session on mount, subscribes to `onAuthStateChange`, exposes `session` and `isLoading` via React Context (`useAuth()`). Middleware enforces default-deny; layouts are conditionally effective via middleware redirects (unauthenticated → `(auth)`; authenticated on `/` or `/login` → `/dashboard`).
+- **Verification:** `node test/verify_task_1_2.mjs` (all 8 checks pass).
+
+## Cloud build integrity (QA)
+
+- **Clean build:** `npm run build` completes successfully; all 14 routes compile and prerender; middleware proxy active. No build errors.
+- **TypeScript:** `npx tsc --noEmit` passes with no type errors. Existing TypeScript interfaces respected; no `any` or `@ts-ignore` used to bypass type safety.
+- **Linting:** `npm run lint` (ESLint) passes with zero errors and zero warnings. Verification scripts that used `require()` were converted to ESM (`verify_repomix_config.mjs`, `verify_scaffold.mjs`) to satisfy `@typescript-eslint/no-require-imports`.
+- **Status:** Codebase compiles cleanly in the cloud; ready for manual testing.
+</file>
+
+</files>
