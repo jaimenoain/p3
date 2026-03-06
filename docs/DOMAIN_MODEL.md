@@ -1,8 +1,10 @@
 # **P3: Unified Data & API Contract**
 
-### Phase 1 implementation note
+### Phase 1 & 2 implementation note
 
-Phase 1 (Walking Skeleton) uses **Supabase Auth** for sign-in, sign-up, forgot-password, and session. No `/api/v1/*` routes or UserContextDTO/workspace APIs are implemented yet. The domains and API contracts below remain the source of truth for Phase 2 and beyond.
+Phase 1 (Walking Skeleton) uses **Supabase Auth** for sign-in, sign-up, forgot-password, and session. Phase 2 (Tenant Provisioning) implements `organizations`, `organization_members`, `workspaces`, and `scenarios` tables along with Row Level Security (RLS) firewalls.
+
+Currently, tenant provisioning is handled entirely server-side via Server Actions (`provisionTenantAction`) calling a PostgreSQL RPC (`provision_tenant`) to safely bypass RLS during initialization. Workspace cash balance updates also use Server Actions. REST API endpoints (`/api/v1/*`) are not yet active; the domain shapes below reflect the target logical contracts for future decoupled APIs, but current integration relies on direct Next.js Server Actions.
 
 ---
 
@@ -100,7 +102,7 @@ CREATE TABLE workspaces (
     id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
     organization\_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,  
     name VARCHAR(255) NOT NULL,  
-    starting\_cash\_balance NUMERIC(15, 2) NOT NULL DEFAULT 0.00, \-- Required for Day 1 usability \[cite: 134, 135\]  
+    starting\_cash\_balance NUMERIC(15, 2), \-- Nullable. Prompts user for balance if NULL on load
     created\_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT\_TIMESTAMP  
 );
 
