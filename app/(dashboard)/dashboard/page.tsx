@@ -10,23 +10,116 @@ import {
 } from "@/components/ui/table";
 import type { FinancialTimeline } from "@/lib/financial-engine";
 
-function formatCurrency(value: number): string {
+type FinancialTableRowKind = "summary" | "lineItem";
+
+type FinancialTableRow = {
+  id: string;
+  label: string;
+  kind: FinancialTableRowKind;
+  values: number[];
+};
+
+function formatAccounting(value: number): string {
+  const abs = Math.abs(value);
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-    signDisplay: "auto",
-  }).format(value);
+  }).format(abs) *>
+    (value < 0 ? `(${formatted})` : formatted);
+}
+
+function buildFinancialTableRows(timeline: FinancialTimeline): FinancialTableRow[] {
+  if (timeline.length === 0) return [];
+
+  const mrrRow: FinancialTableRow = {
+    id: "mrr",
+    label: "MRR / Recurring Revenue",
+    kind: "lineItem",
+    values: timeline.map((m) => m.mrr),
+  };
+
+  const capitalOtherRow: FinancialTableRow = {
+    id: "capital-other-inflows",
+    label: "Capital & Other Inflows",
+    kind: "lineItem",
+    values: timeline.map((m) => m.totalCashIn - m.mrr),
+  };
+
+  const cashInflowsSummary: FinancialTableRow = {
+    id: "cash-inflows",
+    label: "Cash Inflows",
+    kind: "summary",
+    values: timeline.map((m) => m.totalCashIn),
+  };
+
+  const personnelRow: FinancialTableRow = {
+    id: "personnel",
+    label: "Personnel Costs",
+    kind: "lineItem",
+    values: timeline.map((m) => m.personnelOut),
+  };
+
+  const marketingRow: FinancialTableRow = {
+    id: "marketing",
+    label: "Marketing & Ads",
+    kind: "lineItem",
+    values: timeline.map((m) => m.totalCashOut - m.personnelOut - m.opexOut),
+  };
+
+  const opexRow: FinancialTableRow = {
+    id: "opex",
+    label: "General OpEx",
+    kind: "lineItem",
+    values: timeline.map((m) => m.opexOut),
+  };
+
+  const cashOutflowsSummary: FinancialTableRow = {
+    id: "cash-outflows",
+    label: "Cash Outflows / Gross Burn",
+    kind: "summary",
+    values: timeline.map((m) => m.totalCashOut),
+  };
+
+  const netBurnSummary: FinancialTableRow = {
+    id: "net-burn",
+    label: "Net Cash Flow / Net Burn",
+    kind: "summary",
+    values: timeline.map((m) => m.netBurn),
+  };
+
+  const endingCashSummary: FinancialTableRow = {
+    id: "ending-cash",
+    label: "Ending Cash Balance",
+    kind: "summary",
+    values: timeline.map((m) => m.endingCash),
+  };
+
+  return [
+    cashInflowsSummary,
+    mrrRow,
+    capitalOtherRow,
+    cashOutflowsSummary,
+    personnelRow,
+    marketingRow,
+    opexRow,
+    netBurnSummary,
+    endingCashSummary,
+  ];
 }
 
 function FinancialTable({ timeline }: { timeline: FinancialTimeline }) {
   const numMonths = timeline.length;
   if (numMonths === 0) return null;
 
+  const rows = buildFinancialTableRows(timeline);
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[140px]">Metric</TableHead>
+          <TableHead className="sticky left-0 z-10 w-[180px] bg-background">
+            Metric
+          </TableHead>
           {timeline.map((m) => (
             <TableHead
               key={m.monthIndex}
@@ -38,54 +131,32 @@ function FinancialTable({ timeline }: { timeline: FinancialTimeline }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow>
-          <TableCell className="font-medium">MRR</TableCell>
-          {timeline.map((m) => (
-            <TableCell key={m.monthIndex} className="text-right tabular-nums">
-              {formatCurrency(m.mrr)}
-            </TableCell>
-          ))}
-        </TableRow>
-        <TableRow>
-          <TableCell className="font-medium">Cash Inflows</TableCell>
-          {timeline.map((m) => (
-            <TableCell key={m.monthIndex} className="text-right tabular-nums">
-              {formatCurrency(m.totalCashIn)}
-            </TableCell>
-          ))}
-        </TableRow>
-        <TableRow>
-          <TableCell className="font-medium">Personnel</TableCell>
-          {timeline.map((m) => (
-            <TableCell key={m.monthIndex} className="text-right tabular-nums">
-              {formatCurrency(m.personnelOut)}
-            </TableCell>
-          ))}
-        </TableRow>
-        <TableRow>
-          <TableCell className="font-medium">OpEx</TableCell>
-          {timeline.map((m) => (
-            <TableCell key={m.monthIndex} className="text-right tabular-nums">
-              {formatCurrency(m.opexOut)}
-            </TableCell>
-          ))}
-        </TableRow>
-        <TableRow>
-          <TableCell className="font-medium">Net Burn</TableCell>
-          {timeline.map((m) => (
-            <TableCell key={m.monthIndex} className="text-right tabular-nums">
-              {formatCurrency(m.netBurn)}
-            </TableCell>
-          ))}
-        </TableRow>
-        <TableRow>
-          <TableCell className="font-medium">Ending Cash</TableCell>
-          {timeline.map((m) => (
-            <TableCell key={m.monthIndex} className="text-right tabular-nums">
-              {formatCurrency(m.endingCash)}
-            </TableCell>
-          ))}
-        </TableRow>
+        {rows.map((row) => {
+          const isSummary = row.kind === "summary";
+          const labelClasses = isSummary
+            ? "sticky left-0 z-10 bg-background font-medium"
+            : "sticky left-0 z-10 bg-background pl-6 text-muted-foreground";
+
+          return (
+            <TableRow key={row.id}>
+              <TableCell className={labelClasses}>{row.label}</TableCell>
+              {row.values.map((value, index) => {
+                const isEndingCashRow = row.id === "ending-cash";
+                const isWarning = isEndingCashRow && value < 0;
+                return (
+                  <TableCell
+                    key={`${row.id}-${index}`}
+                    className={`text-right tabular-nums${
+                      isWarning ? " text-destructive" : ""
+                    }`}
+                  >
+                    {formatAccounting(value)}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

@@ -439,6 +439,7 @@ function getDefaultPayloadForDependencyUpdate(type: BlockType): Record<string, u
       };
     case "OpEx":
       return {
+        expenseType: "fixed",
         expenseName: "Expense",
         monthlyCost: 0,
         annualGrowthRatePercent: 0,

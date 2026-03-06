@@ -111,15 +111,27 @@ export function calculateFinancials(
       personnelOut += salary * headcount * (1 + burden);
     }
 
-    // --- OpEx: monthly cost (with annual growth; V1 simple = flat)
+    // --- OpEx: fixed (monthly), variable (% of revenue), or one-off (single month)
     let opexOut = 0;
     for (const b of active) {
       if (b.type !== "OpEx") continue;
       const p = b.properties;
-      const monthly = getNumber(p, "monthlyCost", 0);
-      const growthRate = getNumber(p, "annualGrowthRatePercent", 0);
-      const growthFactor = Math.pow(1 + growthRate, (m - 1) / 12);
-      opexOut += monthly * growthFactor;
+      const expenseType = (p.expenseType as string) ?? "fixed";
+      if (expenseType === "one-off") {
+        const oneOffMonth = (p.month as string) ?? "";
+        if (oneOffMonth === monthKey) {
+          opexOut += getNumber(p, "amount", 0);
+        }
+      } else if (expenseType === "variable") {
+        const pctRevenue = getNumber(p, "percentageOfRevenue", 0);
+        opexOut += mrr * pctRevenue;
+      } else {
+        // fixed (recurring)
+        const monthly = getNumber(p, "monthlyCost", 0);
+        const growthRate = getNumber(p, "annualGrowthRatePercent", 0);
+        const growthFactor = Math.pow(1 + growthRate, (m - 1) / 12);
+        opexOut += monthly * growthFactor;
+      }
     }
 
     // --- Marketing: monthly ad spend

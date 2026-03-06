@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   Area,
-  AreaChart,
+  Bar,
   CartesianGrid,
+  ComposedChart,
   ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -52,6 +54,56 @@ function formatCurrency(value: number): string {
     maximumFractionDigits: 0,
     signDisplay: "auto",
   }).format(value);
+}
+
+function formatCurrencyWithSymbol(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+type RunwayTooltipProps = {
+  active?: boolean;
+  label?: string;
+  payload?: Array<{
+    value: number;
+    dataKey: string;
+    payload: { month: string; grossBurn: number; endingCash: number };
+  }>;
+};
+
+function RunwayTooltip({ active, payload }: RunwayTooltipProps) {
+  if (!active || !payload || payload.length === 0) return null;
+  const data = payload[0].payload;
+
+  return (
+    <div className="rounded-md border border-border bg-background px-3 py-2 text-xs shadow-md">
+      <p className="mb-1 font-medium text-foreground">{data.month}</p>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-4">
+          <span className="flex items-center text-muted-foreground">
+            <span className="mr-2 h-2 w-2 rounded-full bg-[var(--chart-1)]" />
+            Gross Burn
+          </span>
+          <span className="tabular-nums">
+            {formatCurrencyWithSymbol(data.grossBurn)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className="flex items-center text-muted-foreground">
+            <span className="mr-2 h-2 w-2 rounded-full bg-[var(--chart-2)]" />
+            Ending Cash
+          </span>
+          <span className="tabular-nums">
+            {formatCurrencyWithSymbol(data.endingCash)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function RunwayDashboardClient({
@@ -127,45 +179,75 @@ export function RunwayDashboardClient({
 
       <section className="w-full min-w-0 overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm">
         <h2 className="mb-4 text-sm font-medium text-muted-foreground">
-          {scenarioName} — Runway (stacked area)
+          {scenarioName} — Runway
         </h2>
         <div className="h-[320px] min-h-[240px] w-full">
           {mounted ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
+              <ComposedChart
                 data={chartData}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                margin={{ top: 10, right: 16, left: 0, bottom: 8 }}
               >
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <defs>
+                  <linearGradient
+                    id="endingCashGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor="var(--chart-2)"
+                      stopOpacity={0.35}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor="var(--chart-2)"
+                      stopOpacity={0}
+                    />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  vertical={false}
+                  stroke="var(--border)"
+                  strokeOpacity={0.4}
+                  strokeDasharray="3 3"
+                />
                 <XAxis
                   dataKey="month"
                   tick={{ fontSize: 12, className: "tabular-nums" }}
+                  axisLine={false}
                   tickLine={false}
+                  tickMargin={8}
                 />
                 <YAxis
                   tick={{ fontSize: 12, className: "tabular-nums" }}
+                  axisLine={false}
                   tickLine={false}
                   tickFormatter={(v) => formatCurrency(v)}
+                  tickMargin={8}
                 />
-                <Area
-                  type="monotone"
+                <Tooltip
+                  cursor={{ stroke: "var(--border)", strokeDasharray: "4 4" }}
+                  content={<RunwayTooltip />}
+                />
+                <Bar
                   dataKey="grossBurn"
-                  stackId="1"
-                  stroke="var(--chart-1)"
-                  fill="var(--chart-1)"
-                  fillOpacity={0.7}
                   name="Gross Burn"
+                  fill="var(--chart-1)"
+                  radius={[4, 4, 0, 0]}
+                  barSize={18}
                 />
                 <Area
                   type="monotone"
                   dataKey="endingCash"
-                  stackId="1"
                   stroke="var(--chart-2)"
-                  fill="var(--chart-2)"
-                  fillOpacity={0.7}
+                  strokeWidth={2}
+                  fill="url(#endingCashGradient)"
                   name="Ending Cash"
                 />
-              </AreaChart>
+              </ComposedChart>
             </ResponsiveContainer>
           ) : (
             <div

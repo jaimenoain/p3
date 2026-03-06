@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, Pencil, Trash2 } from "lucide-react";
 import type { BlockRecord, BlockType, NumericInputMode } from "../actions";
 import {
   createBlockMutation,
@@ -20,6 +20,13 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const BLOCK_TYPES: BlockType[] = [
   "Personnel",
@@ -27,8 +34,6 @@ const BLOCK_TYPES: BlockType[] = [
   "Marketing",
   "OpEx",
   "Capital",
-  "VariableCost",
-  "OneTime",
 ];
 
 /**
@@ -67,6 +72,7 @@ export function ProjectionCanvasClient({ scenarioId, initialBlocks }: Props) {
   const [isCreating, startCreateTransition] = useTransition();
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [newBlockInModal, setNewBlockInModal] = useState<BlockRecord | null>(null);
 
   useEffect(() => {
     if (!toastMessage) return;
@@ -106,8 +112,19 @@ export function ProjectionCanvasClient({ scenarioId, initialBlocks }: Props) {
         return;
       }
 
-      setBlocks((prev) => [...prev, result.block]);
+      setNewBlockInModal(result.block);
     });
+  }
+
+  async function handleCloseNewBlockModal() {
+    if (!newBlockInModal) return;
+    await deleteBlockMutation({ blockId: newBlockInModal.id });
+    setNewBlockInModal(null);
+  }
+
+  function handleNewBlockSaved(updated: BlockRecord) {
+    setBlocks((prev) => [...prev, updated]);
+    setNewBlockInModal(null);
   }
 
   const activeBlocks = blocks.filter((block) => block.is_active);
@@ -253,6 +270,34 @@ export function ProjectionCanvasClient({ scenarioId, initialBlocks }: Props) {
           </div>
         </div>
       )}
+
+      <Dialog
+        open={!!newBlockInModal}
+        onOpenChange={(open) => {
+          if (!open && newBlockInModal) void handleCloseNewBlockModal();
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Configure new block</DialogTitle>
+          </DialogHeader>
+          {newBlockInModal && (
+            <BlockCard
+              block={newBlockInModal}
+              allBlocks={blocks}
+              onUpdated={(updated) => {
+                setNewBlockInModal(updated);
+              }}
+              onDeleted={() => setNewBlockInModal(null)}
+              runWithRecalculation={runWithRecalculation}
+              showToast={setToastMessage}
+              isNewBlockModal
+              onSaveSuccess={handleNewBlockSaved}
+              onCancel={() => void handleCloseNewBlockModal()}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -264,7 +309,129 @@ type BlockCardProps = {
   onDeleted: (blockId: string) => void;
   runWithRecalculation: <T>(fn: () => Promise<T>) => Promise<T>;
   showToast: (message: string) => void;
+  /** When true, card is shown inside "new block" modal: form only, Cancel/Save, no delete/switch. */
+  isNewBlockModal?: boolean;
+  onSaveSuccess?: (block: BlockRecord) => void;
+  onCancel?: () => void;
 };
+
+/** Labels shown in compact read-only view; the rest are behind "Show more". */
+const KEY_READONLY_LABELS: Record<BlockType, string[]> = {
+  Personnel: ["Role name", "Type", "Monthly gross salary", "Headcount count"],
+  Revenue: ["Starting MRR", "New customers (source)", "ARPA"],
+  Marketing: ["Monthly ad spend", "Target CAC"],
+  OpEx: ["Expense name", "Expense type", "Monthly cost"],
+  Capital: ["Funding type", "Amount", "Month received"],
+};
+
+function getOpExKeyLabels(expenseType: string): string[] {
+  if (expenseType === "variable")
+    return ["Expense name", "Expense type", "Percentage of Revenue"];
+  if (expenseType === "one-off")
+    return ["Expense name", "Expense type", "Amount", "Month"];
+  return ["Expense name", "Expense type", "Monthly cost"];
+}
+
+type ReadOnlyRowItem = { label: string; value: string | number | null | undefined };
+
+function getReadOnlyRows(
+  block: BlockRecord,
+  formState: Record<string, string>,
+  allBlocks: BlockRecord[],
+  newCustomersMode: NumericInputMode,
+  newCustomersReferenceId: string
+): ReadOnlyRowItem[] {
+  const p = formState;
+  if (block.type === "Personnel") {
+    return [
+      { label: "Role name", value: p.roleName },
+      { label: "Type", value: p.roleType === "sales" ? "Sales" : "Standard" },
+      ...(p.roleType === "sales"
+        ? [
+            { label: "New clients per month (at full ramp)", value: p.salesClientsPerMonth },
+            { label: "Months until first client", value: p.salesMonthsToFirstClient },
+          ]
+        : []),
+      { label: "Monthly gross salary", value: p.monthlyGrossSalary },
+      { label: "Employer burden %", value: p.employerBurdenPercent },
+      { label: "Start month", value: p.startMonth },
+      { label: "End month", value: p.endMonth },
+      { label: "Headcount count", value: p.headcountCount },
+    ];
+  }
+  if (block.type === "Revenue") {
+    const newCustomersDisplay =
+      newCustomersMode === "Referenced" && newCustomersReferenceId
+        ? (() => {
+            const refBlock = allBlocks.find((b) => b.id === newCustomersReferenceId);
+            const refTitle = refBlock?.title ?? refBlock?.type ?? "block";
+            const refValue = refBlock ? getReferencedNewCustomersValue(refBlock) : null;
+            if (refValue !== null) return `${refValue} (from ${refTitle})`;
+            return `From ${refTitle}`;
+          })()
+        : p.newCustomersStatic;
+    return [
+      { label: "Starting MRR", value: p.startingMrr },
+      { label: "New customers (source)", value: newCustomersDisplay },
+      { label: "ARPA", value: p.arpa },
+      { label: "Setup fee", value: p.setupFee },
+      { label: "Monthly churn %", value: p.monthlyChurnPercent },
+      {
+        label: "Upsell / expansion growth %",
+        value:
+          p.monthlyMrrGrowthPercent !== undefined && p.monthlyMrrGrowthPercent !== ""
+            ? p.monthlyMrrGrowthPercent
+            : "—",
+      },
+      { label: "Billing frequency", value: p.billingFrequency },
+    ];
+  }
+  if (block.type === "Marketing") {
+    return [
+      { label: "Monthly ad spend", value: p.monthlyAdSpend },
+      { label: "Target CAC", value: p.targetCac },
+      { label: "Sales cycle lag (months)", value: p.salesCycleLagMonths },
+    ];
+  }
+  if (block.type === "OpEx") {
+    const expenseType = p.expenseType ?? "fixed";
+    const typeLabel =
+      expenseType === "variable"
+        ? "Variable"
+        : expenseType === "one-off"
+          ? "One-off"
+          : "Fixed";
+    const base: ReadOnlyRowItem[] = [
+      { label: "Expense name", value: p.expenseName },
+      { label: "Expense type", value: typeLabel },
+    ];
+    if (expenseType === "fixed") {
+      base.push(
+        { label: "Monthly cost", value: p.monthlyCost },
+        { label: "Annual growth rate %", value: p.annualGrowthRatePercent }
+      );
+    } else if (expenseType === "variable") {
+      base.push(
+        { label: "Percentage of Revenue", value: p.percentageOfRevenue },
+        { label: "Fixed cost per customer", value: p.fixedCostPerCustomer }
+      );
+    } else {
+      base.push(
+        { label: "Amount", value: p.amount },
+        { label: "Month", value: p.month }
+      );
+    }
+    return base;
+  }
+  if (block.type === "Capital") {
+    return [
+      { label: "Funding type", value: p.fundingType },
+      { label: "Amount", value: p.amount },
+      { label: "Month received", value: p.monthReceived },
+    ];
+  }
+  return [];
+}
 
 function ReadOnlyRow({
   label,
@@ -282,6 +449,71 @@ function ReadOnlyRow({
   );
 }
 
+function ReadOnlyCardContent({
+  block,
+  formState,
+  allBlocks,
+  newCustomersMode,
+  newCustomersReferenceId,
+  isReadOnlyExpanded,
+  onToggleExpanded,
+}: {
+  block: BlockRecord;
+  formState: Record<string, string>;
+  allBlocks: BlockRecord[];
+  newCustomersMode: NumericInputMode;
+  newCustomersReferenceId: string;
+  isReadOnlyExpanded: boolean;
+  onToggleExpanded: () => void;
+}) {
+  const rows = getReadOnlyRows(
+    block,
+    formState,
+    allBlocks,
+    newCustomersMode,
+    newCustomersReferenceId
+  );
+  const keyLabels =
+    block.type === "OpEx"
+      ? getOpExKeyLabels(formState.expenseType ?? "fixed")
+      : (KEY_READONLY_LABELS[block.type] ?? []);
+  const keyRows = rows.filter((r) => keyLabels.includes(r.label));
+  const restRows = rows.filter((r) => !keyLabels.includes(r.label));
+  const hasRest = restRows.length > 0;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
+        {keyRows.map(({ label, value }) => (
+          <ReadOnlyRow key={label} label={label} value={value} />
+        ))}
+        {isReadOnlyExpanded && restRows.map(({ label, value }) => (
+          <ReadOnlyRow key={label} label={label} value={value} />
+        ))}
+      </div>
+      {hasRest && (
+        <button
+          type="button"
+          onClick={onToggleExpanded}
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+        >
+          {isReadOnlyExpanded ? (
+            <>
+              <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+              Show less
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+              Show more
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function BlockCard({
   block,
   allBlocks,
@@ -289,6 +521,9 @@ function BlockCard({
   onDeleted,
   runWithRecalculation,
   showToast,
+  isNewBlockModal = false,
+  onSaveSuccess,
+  onCancel,
 }: BlockCardProps) {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isUpdating, startUpdateTransition] = useTransition();
@@ -307,8 +542,9 @@ function BlockCard({
   };
 
   const [isEditing, setIsEditing] = useState<boolean>(
-    Object.keys(initialPayload).length === 0
+    isNewBlockModal || Object.keys(initialPayload).length === 0
   );
+  const [isReadOnlyExpanded, setIsReadOnlyExpanded] = useState(false);
 
   const [title, setTitle] = useState<string>(block.title ?? block.type);
 
@@ -356,25 +592,24 @@ function BlockCard({
         initialPayload.salesCycleLagMonths ?? "0"
       );
     } else if (block.type === "OpEx") {
+      base.expenseType = String(initialPayload.expenseType ?? "fixed");
       base.expenseName = String(initialPayload.expenseName ?? "");
       base.monthlyCost = String(initialPayload.monthlyCost ?? "");
       base.annualGrowthRatePercent = String(
         initialPayload.annualGrowthRatePercent ?? ""
       );
+      base.percentageOfRevenue = String(
+        initialPayload.percentageOfRevenue ?? ""
+      );
+      base.fixedCostPerCustomer = String(
+        initialPayload.fixedCostPerCustomer ?? ""
+      );
+      base.amount = String(initialPayload.amount ?? "");
+      base.month = String(initialPayload.month ?? "");
     } else if (block.type === "Capital") {
       base.fundingType = String(initialPayload.fundingType ?? "Equity");
       base.amount = String(initialPayload.amount ?? "");
       base.monthReceived = String(initialPayload.monthReceived ?? "");
-    } else if (block.type === "VariableCost") {
-      base.expenseName = String(initialPayload.expenseName ?? "");
-      base.percentageOfRevenue = String(initialPayload.percentageOfRevenue ?? "");
-      base.fixedCostPerCustomer = String(
-        initialPayload.fixedCostPerCustomer ?? ""
-      );
-    } else if (block.type === "OneTime") {
-      base.expenseName = String(initialPayload.expenseName ?? "");
-      base.amount = String(initialPayload.amount ?? "");
-      base.month = String(initialPayload.month ?? "");
     }
 
     return base;
@@ -520,7 +755,11 @@ function BlockCard({
 
       onUpdated(result.block);
       setTitle(result.block.title ?? result.block.type);
-      setIsEditing(false);
+      if (isNewBlockModal && onSaveSuccess) {
+        onSaveSuccess(result.block);
+      } else {
+        setIsEditing(false);
+      }
     });
   }
 
@@ -564,12 +803,14 @@ function BlockCard({
     });
   }
 
+  const showForm = isEditing || isNewBlockModal;
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-1">
-            {isEditing ? (
+            {showForm ? (
               <Input
                 className="h-8 text-sm font-semibold"
                 value={title}
@@ -592,46 +833,45 @@ function BlockCard({
               {block.type} • {isActive ? "Active" : "Inactive"} block
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => void handleDelete()}
-              disabled={isDeleting}
-              aria-label="Delete block"
-              className="text-muted-foreground hover:text-destructive"
-            >
-              {isDeleting ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              ) : (
-                <Trash2 className="h-4 w-4" aria-hidden />
-              )}
-            </Button>
-            {!isEditing && (
+          {!isNewBlockModal && (
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsEditing(true)}
-                aria-label="Edit block"
+                onClick={() => void handleDelete()}
+                disabled={isDeleting}
+                aria-label="Delete block"
+                className="text-muted-foreground hover:text-destructive"
               >
-                <Pencil className="h-4 w-4" aria-hidden />
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Trash2 className="h-4 w-4" aria-hidden />
+                )}
               </Button>
-            )}
-            <span className="text-xs font-medium text-muted-foreground">
-              On/Off
-            </span>
-            <Switch
-              checked={isActive}
-              onCheckedChange={(checked) => void handleToggle(checked)}
-              aria-label="Toggle block on or off"
-            />
-          </div>
+              {!isEditing && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsEditing(true)}
+                  aria-label="Edit block"
+                >
+                  <Pencil className="h-4 w-4" aria-hidden />
+                </Button>
+              )}
+              <Switch
+                checked={isActive}
+                onCheckedChange={(checked) => void handleToggle(checked)}
+                aria-label="Toggle block on or off"
+              />
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
-        {isEditing ? (
+        {showForm ? (
           <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
             {block.type === "Personnel" && (
               <>
@@ -1144,6 +1384,28 @@ function BlockCard({
               <div className="flex flex-col gap-1">
                 <label
                   className="text-sm font-medium"
+                  htmlFor={`${block.id}-opex-expenseType`}
+                >
+                  Expense type
+                </label>
+                <select
+                  id={`${block.id}-opex-expenseType`}
+                  name="expenseType"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  value={formState.expenseType ?? "fixed"}
+                  onChange={(event) =>
+                    handleChange("expenseType", event.target.value)
+                  }
+                  disabled={isUpdating}
+                >
+                  <option value="fixed">Fixed (recurring)</option>
+                  <option value="variable">Variable (% of revenue)</option>
+                  <option value="one-off">One-off</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-sm font-medium"
                   htmlFor={`${block.id}-expenseName`}
                 >
                   Expense name
@@ -1158,120 +1420,149 @@ function BlockCard({
                   disabled={isUpdating}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-monthlyCost`}
-                >
-                  Monthly cost
-                </label>
-                <Input
-                  id={`${block.id}-monthlyCost`}
-                  name="monthlyCost"
-                  type="number"
-                  className="tabular-nums"
-                  value={formState.monthlyCost ?? ""}
-                  onChange={(event) =>
-                    handleChange("monthlyCost", event.target.value)
-                  }
-                  disabled={isUpdating}
-                  min={0}
-                  step="any"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-annualGrowthRatePercent`}
-                >
-                  Annual growth rate %
-                </label>
-                <Input
-                  id={`${block.id}-annualGrowthRatePercent`}
-                  name="annualGrowthRatePercent"
-                  type="number"
-                  className="tabular-nums"
-                  value={formState.annualGrowthRatePercent ?? ""}
-                  onChange={(event) =>
-                    handleChange(
-                      "annualGrowthRatePercent",
-                      event.target.value
-                    )
-                  }
-                  disabled={isUpdating}
-                  min={0}
-                  max={1}
-                  step="any"
-                />
-              </div>
-            </>
-          )}
-
-          {block.type === "VariableCost" && (
-            <>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-variablecost-expenseName`}
-                >
-                  Expense name
-                </label>
-                <Input
-                  id={`${block.id}-variablecost-expenseName`}
-                  name="expenseName"
-                  value={formState.expenseName ?? ""}
-                  onChange={(event) =>
-                    handleChange("expenseName", event.target.value)
-                  }
-                  disabled={isUpdating}
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-variablecost-percentageOfRevenue`}
-                >
-                  Percentage of Revenue
-                </label>
-                <span className="text-xs text-muted-foreground">
-                  Decimal (e.g. 0.029 for 2.9%)
-                </span>
-                <Input
-                  id={`${block.id}-variablecost-percentageOfRevenue`}
-                  name="percentageOfRevenue"
-                  type="number"
-                  className="tabular-nums"
-                  value={formState.percentageOfRevenue ?? ""}
-                  onChange={(event) =>
-                    handleChange("percentageOfRevenue", event.target.value)
-                  }
-                  disabled={isUpdating}
-                  min={0}
-                  max={1}
-                  step="any"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-variablecost-fixedCostPerCustomer`}
-                >
-                  Fixed cost per customer
-                </label>
-                <Input
-                  id={`${block.id}-variablecost-fixedCostPerCustomer`}
-                  name="fixedCostPerCustomer"
-                  type="number"
-                  className="tabular-nums"
-                  value={formState.fixedCostPerCustomer ?? ""}
-                  onChange={(event) =>
-                    handleChange("fixedCostPerCustomer", event.target.value)
-                  }
-                  disabled={isUpdating}
-                  min={0}
-                  step="any"
-                />
-              </div>
+              {(formState.expenseType ?? "fixed") === "fixed" && (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label
+                      className="text-sm font-medium"
+                      htmlFor={`${block.id}-monthlyCost`}
+                    >
+                      Monthly cost
+                    </label>
+                    <Input
+                      id={`${block.id}-monthlyCost`}
+                      name="monthlyCost"
+                      type="number"
+                      className="tabular-nums"
+                      value={formState.monthlyCost ?? ""}
+                      onChange={(event) =>
+                        handleChange("monthlyCost", event.target.value)
+                      }
+                      disabled={isUpdating}
+                      min={0}
+                      step="any"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label
+                      className="text-sm font-medium"
+                      htmlFor={`${block.id}-annualGrowthRatePercent`}
+                    >
+                      Annual growth rate %
+                    </label>
+                    <Input
+                      id={`${block.id}-annualGrowthRatePercent`}
+                      name="annualGrowthRatePercent"
+                      type="number"
+                      className="tabular-nums"
+                      value={formState.annualGrowthRatePercent ?? ""}
+                      onChange={(event) =>
+                        handleChange(
+                          "annualGrowthRatePercent",
+                          event.target.value
+                        )
+                      }
+                      disabled={isUpdating}
+                      min={0}
+                      max={1}
+                      step="any"
+                    />
+                  </div>
+                </>
+              )}
+              {(formState.expenseType ?? "fixed") === "variable" && (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label
+                      className="text-sm font-medium"
+                      htmlFor={`${block.id}-percentageOfRevenue`}
+                    >
+                      Percentage of Revenue
+                    </label>
+                    <span className="text-xs text-muted-foreground">
+                      Decimal (e.g. 0.029 for 2.9%)
+                    </span>
+                    <Input
+                      id={`${block.id}-percentageOfRevenue`}
+                      name="percentageOfRevenue"
+                      type="number"
+                      className="tabular-nums"
+                      value={formState.percentageOfRevenue ?? ""}
+                      onChange={(event) =>
+                        handleChange("percentageOfRevenue", event.target.value)
+                      }
+                      disabled={isUpdating}
+                      min={0}
+                      max={1}
+                      step="any"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label
+                      className="text-sm font-medium"
+                      htmlFor={`${block.id}-fixedCostPerCustomer`}
+                    >
+                      Fixed cost per customer
+                    </label>
+                    <Input
+                      id={`${block.id}-fixedCostPerCustomer`}
+                      name="fixedCostPerCustomer"
+                      type="number"
+                      className="tabular-nums"
+                      value={formState.fixedCostPerCustomer ?? ""}
+                      onChange={(event) =>
+                        handleChange("fixedCostPerCustomer", event.target.value)
+                      }
+                      disabled={isUpdating}
+                      min={0}
+                      step="any"
+                    />
+                  </div>
+                </>
+              )}
+              {(formState.expenseType ?? "fixed") === "one-off" && (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label
+                      className="text-sm font-medium"
+                      htmlFor={`${block.id}-opex-amount`}
+                    >
+                      Amount
+                    </label>
+                    <Input
+                      id={`${block.id}-opex-amount`}
+                      name="amount"
+                      type="number"
+                      className="tabular-nums"
+                      value={formState.amount ?? ""}
+                      onChange={(event) =>
+                        handleChange("amount", event.target.value)
+                      }
+                      disabled={isUpdating}
+                      min={0}
+                      step="any"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label
+                      className="text-sm font-medium"
+                      htmlFor={`${block.id}-opex-month`}
+                    >
+                      Month
+                    </label>
+                    <Input
+                      id={`${block.id}-opex-month`}
+                      name="month"
+                      type="month"
+                      value={formState.month ?? ""}
+                      onChange={(event) =>
+                        handleChange("month", event.target.value)
+                      }
+                      disabled={isUpdating}
+                    />
+                  </div>
+                </>
+              )}
             </>
           )}
 
@@ -1340,74 +1631,24 @@ function BlockCard({
             </>
           )}
 
-          {block.type === "OneTime" && (
-            <>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-onetime-expenseName`}
-                >
-                  Expense name
-                </label>
-                <Input
-                  id={`${block.id}-onetime-expenseName`}
-                  name="expenseName"
-                  value={formState.expenseName ?? ""}
-                  onChange={(event) =>
-                    handleChange("expenseName", event.target.value)
-                  }
-                  disabled={isUpdating}
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-onetime-amount`}
-                >
-                  Amount
-                </label>
-                <Input
-                  id={`${block.id}-onetime-amount`}
-                  name="amount"
-                  type="number"
-                  className="tabular-nums"
-                  value={formState.amount ?? ""}
-                  onChange={(event) =>
-                    handleChange("amount", event.target.value)
-                  }
-                  disabled={isUpdating}
-                  min={0}
-                  step="any"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-onetime-month`}
-                >
-                  Month
-                </label>
-                <Input
-                  id={`${block.id}-onetime-month`}
-                  name="month"
-                  type="month"
-                  value={formState.month ?? ""}
-                  onChange={(event) =>
-                    handleChange("month", event.target.value)
-                  }
-                  disabled={isUpdating}
-                />
-              </div>
-            </>
-          )}
-
           {localError && (
             <p className="text-sm text-destructive" role="alert">
               {localError}
             </p>
           )}
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            {isNewBlockModal && onCancel && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onCancel}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+            )}
             <Button
               type="submit"
               size="sm"
@@ -1425,154 +1666,15 @@ function BlockCard({
           </div>
         </form>
         ) : (
-          <div className="flex flex-col gap-3">
-            {block.type === "Personnel" && (
-              <div className="flex flex-col gap-2">
-                <ReadOnlyRow label="Role name" value={formState.roleName} />
-                <ReadOnlyRow
-                  label="Type"
-                  value={
-                    formState.roleType === "sales" ? "Sales" : "Standard"
-                  }
-                />
-                {formState.roleType === "sales" && (
-                  <>
-                    <ReadOnlyRow
-                      label="New clients per month (at full ramp)"
-                      value={formState.salesClientsPerMonth}
-                    />
-                    <ReadOnlyRow
-                      label="Months until first client"
-                      value={formState.salesMonthsToFirstClient}
-                    />
-                  </>
-                )}
-                <ReadOnlyRow
-                  label="Monthly gross salary"
-                  value={formState.monthlyGrossSalary}
-                />
-                <ReadOnlyRow
-                  label="Employer burden %"
-                  value={formState.employerBurdenPercent}
-                />
-                <ReadOnlyRow label="Start month" value={formState.startMonth} />
-                <ReadOnlyRow label="End month" value={formState.endMonth} />
-                <ReadOnlyRow
-                  label="Headcount count"
-                  value={formState.headcountCount}
-                />
-              </div>
-            )}
-            {block.type === "Revenue" && (
-              <div className="flex flex-col gap-2">
-                <ReadOnlyRow label="Starting MRR" value={formState.startingMrr} />
-                <ReadOnlyRow
-                  label="New customers (source)"
-                  value={
-                    newCustomersMode === "Referenced" && newCustomersReferenceId
-                      ? (() => {
-                          const refBlock = allBlocks.find(
-                            (b) => b.id === newCustomersReferenceId
-                          );
-                          const refTitle = refBlock?.title ?? refBlock?.type ?? "block";
-                          const refValue = refBlock
-                            ? getReferencedNewCustomersValue(refBlock)
-                            : null;
-                          if (refValue !== null) {
-                            return `${refValue} (from ${refTitle})`;
-                          }
-                          return `From ${refTitle}`;
-                        })()
-                      : formState.newCustomersStatic
-                  }
-                />
-                <ReadOnlyRow label="ARPA" value={formState.arpa} />
-                <ReadOnlyRow label="Setup fee" value={formState.setupFee} />
-                <ReadOnlyRow
-                  label="Monthly churn %"
-                  value={formState.monthlyChurnPercent}
-                />
-                <ReadOnlyRow
-                  label="Upsell / expansion growth %"
-                  value={
-                    formState.monthlyMrrGrowthPercent !== undefined &&
-                    formState.monthlyMrrGrowthPercent !== ""
-                      ? formState.monthlyMrrGrowthPercent
-                      : "—"
-                  }
-                />
-                <ReadOnlyRow
-                  label="Billing frequency"
-                  value={formState.billingFrequency}
-                />
-              </div>
-            )}
-            {block.type === "Marketing" && (
-              <div className="flex flex-col gap-2">
-                <ReadOnlyRow
-                  label="Monthly ad spend"
-                  value={formState.monthlyAdSpend}
-                />
-                <ReadOnlyRow label="Target CAC" value={formState.targetCac} />
-                <ReadOnlyRow
-                  label="Sales cycle lag (months)"
-                  value={formState.salesCycleLagMonths}
-                />
-              </div>
-            )}
-            {block.type === "OpEx" && (
-              <div className="flex flex-col gap-2">
-                <ReadOnlyRow
-                  label="Expense name"
-                  value={formState.expenseName}
-                />
-                <ReadOnlyRow label="Monthly cost" value={formState.monthlyCost} />
-                <ReadOnlyRow
-                  label="Annual growth rate %"
-                  value={formState.annualGrowthRatePercent}
-                />
-              </div>
-            )}
-            {block.type === "VariableCost" && (
-              <div className="flex flex-col gap-2">
-                <ReadOnlyRow
-                  label="Expense name"
-                  value={formState.expenseName}
-                />
-                <ReadOnlyRow
-                  label="Percentage of Revenue"
-                  value={formState.percentageOfRevenue}
-                />
-                <ReadOnlyRow
-                  label="Fixed cost per customer"
-                  value={formState.fixedCostPerCustomer}
-                />
-              </div>
-            )}
-            {block.type === "Capital" && (
-              <div className="flex flex-col gap-2">
-                <ReadOnlyRow
-                  label="Funding type"
-                  value={formState.fundingType}
-                />
-                <ReadOnlyRow label="Amount" value={formState.amount} />
-                <ReadOnlyRow
-                  label="Month received"
-                  value={formState.monthReceived}
-                />
-              </div>
-            )}
-            {block.type === "OneTime" && (
-              <div className="flex flex-col gap-2">
-                <ReadOnlyRow
-                  label="Expense name"
-                  value={formState.expenseName}
-                />
-                <ReadOnlyRow label="Amount" value={formState.amount} />
-                <ReadOnlyRow label="Month" value={formState.month} />
-              </div>
-            )}
-          </div>
+          <ReadOnlyCardContent
+            block={block}
+            formState={formState}
+            allBlocks={allBlocks}
+            newCustomersMode={newCustomersMode}
+            newCustomersReferenceId={newCustomersReferenceId}
+            isReadOnlyExpanded={isReadOnlyExpanded}
+            onToggleExpanded={() => setIsReadOnlyExpanded((prev) => !prev)}
+          />
         )}
       </CardContent>
     </Card>
