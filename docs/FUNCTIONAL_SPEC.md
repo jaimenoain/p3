@@ -119,6 +119,8 @@ Engineering must implement a suggested auto-grouping feature (e.g., rows contain
 
 The Canvas is the primary workspace where founders build their forward-looking financial model. Users add and configure Building Blocks on a monthly timeline without writing formulas. Blocks are connected through a dropdown-based dependency system (see Section 4.4).
 
+**Current implementation (Phase 3):** The Canvas is implemented at `/canvas`. Blocks are stored in `public.blocks` with a single JSONB `payload` column holding all type-specific fields and an optional `dependencies` map (field name → `{ mode, value?, referenceId?, formula? }`). The UI provides a "New block" selector and a grid of block cards; each card supports edit (type-specific forms), save, delete, and an On/Off toggle. Only the Revenue block's "New customers (source)" field is wired as a referenceable input (Static or Referenced via dropdown). Cycle prevention is enforced both in the client (dropdown disables downstream blocks) and on the server in `updateBlockDependencyMutation`. A full-canvas "Recalculating model..." overlay runs for at least ~1 second on any block or dependency change; the actual 30/360 projection engine is not yet invoked. Inactive blocks are shown in a collapsible "Inactive Projections" tray. Block titles are stored in `blocks.title` and are editable in the card header.
+
 ## **4.2 Mathematical Engine Rules**
 
 ### **30/360 Month Standard**
@@ -138,6 +140,8 @@ Recalculating the model after a toggle, block edit, or dependency change trigger
 ### **Circular Dependency Prevention**
 
 The UI features proactive graph validation. In a child block's property panel dropdown, any block that already exists downstream in the calculation chain is shown as visible but disabled (grayed out), preventing selection and providing immediate visual feedback. Attempting to create a circular connection results in a snap-back and an error message.
+
+**Implementation:** The client builds the dependency graph from `payload.dependencies` and disables dropdown options for the current block and any block reachable downstream. The server (`updateBlockDependencyMutation`) rebuilds the graph, runs cycle detection before persisting, and returns "Circular dependency detected. This connection is not allowed." when a cycle would be introduced.
 
 ### **Deletion Guard**
 
@@ -160,6 +164,8 @@ Numeric input fields that vary by scenario or can be driven by other blocks supp
 * Formula: Combines one or more references and/or static constants using the operators \+, \-, ×, ÷. Example: aws\_cost \= total\_revenue\_mrr × 0.08
 
 One-off initial values (e.g. Revenue’s Starting MRR) are **static only** and do not support Referenced or Formula.
+
+**Implementation (Phase 3):** The payload schema supports `mode: 'Static' | 'Referenced' | 'Formula'` per field; the Canvas UI currently exposes only **Static** and **Referenced** for the Revenue block's "New customers (source)" field. Formula mode is not yet available in the UI. Eligible reference sources are blocks that expose a new-customers value (Marketing: spend/CAC; Personnel with roleType sales: headcount × clients per month).
 
 ### **Output Slots**
 

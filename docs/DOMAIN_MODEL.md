@@ -158,13 +158,17 @@ CREATE TABLE scenarios (
 CREATE TABLE blocks (  
     id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
     scenario\_id UUID NOT NULL REFERENCES scenarios(id) ON DELETE CASCADE,  
-    type VARCHAR(50) NOT NULL, \-- 'Personnel', 'Revenue', 'Marketing', 'OpEx', 'Capital' \[cite: 110\]  
-    is\_active BOOLEAN DEFAULT true, \-- Supports "Soft Disable / Inactives Tray" \[cite: 97, 98\]  
-    payload JSONB NOT NULL, \-- Encodes specific assumptions (e.g. salary, start\_month) \[cite: 29\]  
-    created\_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT\_TIMESTAMP  
+    type TEXT NOT NULL CHECK (type IN ('Personnel', 'Revenue', 'Marketing', 'OpEx', 'Capital')),  
+    is\_active BOOLEAN NOT NULL DEFAULT true, \-- Supports "Soft Disable / Inactives Tray" \[cite: 97, 98\]  
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb, \-- Encodes type-specific assumptions and optional dependencies map \[cite: 29\]  
+    title TEXT, \-- Human-readable label for the block (nullable; backfilled from type when present)  
+    created\_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),  
+    updated\_at TIMESTAMPTZ NOT NULL DEFAULT NOW()  
 );
 
 CREATE INDEX idx\_blocks\_scenario ON blocks(scenario\_id);
+
+**Payload structure (implementation):** All block-specific data lives in the single \`payload\` JSONB column. There are no separate tables for block fields. Type-specific keys (e.g. \`roleName\`, \`monthlyGrossSalary\` for Personnel) are stored alongside an optional \`dependencies\` object whose keys are field names and values are \`{ mode, value?, referenceId?, formula? }\` for Static, Referenced, or Formula input modes.
 
 #### **Component 2: Security Policies (The Firewall)**
 
@@ -181,7 +185,8 @@ export interface BlockDTO {
   blockId: string; // Maps from blocks.id  
   type: 'Personnel' | 'Revenue' | 'Marketing' | 'OpEx' | 'Capital'; // Maps from blocks.type  
   isActive: boolean; // Maps from blocks.is\_active  
-  properties: Record\<string, any\>; // Maps directly from blocks.payload JSONB \[cite: 29\]  
+  title: string | null; // Maps from blocks.title  
+  properties: Record\<string, any\>; // Maps directly from blocks.payload JSONB \[cite: 29\]. Payload may include an optional \`dependencies\` map (field name → \{ mode: 'Static' | 'Referenced' | 'Formula', value?, referenceId?, formula? \}) for driver-based reference fields.  
 }
 
 export interface ScenarioDTO {  
