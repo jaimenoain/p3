@@ -44,8 +44,10 @@ CREATE INDEX idx\_org\_members\_user ON organization\_members(user\_id);
 #### **Component 2: Security Policies (The Firewall)**
 
 * **Authentication:** Requires active Bearer token.  
-* **RLS (Row Level Security):** \* users: SELECT, UPDATE strictly limited where id \= auth.uid().  
-  * organizations: SELECT, UPDATE strictly limited to organizations where auth.uid() exists in organization\_members.user\_id. DELETE is locked to role \= 'owner'.
+* **RLS (Row Level Security):**
+  * users: SELECT, UPDATE strictly limited where id \= auth.uid().  
+  * organizations: SELECT, UPDATE strictly limited to organizations where auth.uid() exists in organization\_members.user\_id. DELETE is locked to role \= 'owner'. INSERT is allowed for the `authenticated` role to support first-time tenant provisioning.  
+  * organization\_members: INSERT is allowed for the `authenticated` role only when `auth.uid() \= user_id`, so users can only add themselves to an organization.
 
 #### **Component 3: API Route Registry & DTOs (The Contract)**
 
@@ -88,6 +90,46 @@ JSON
   "joinedAt": "2026-03-01T14:30:00Z"  
 }
 
+#### **Component 6: Tenant provisioning RPC (Phase 2 implementation)**
+
+SQL
+
+CREATE OR REPLACE FUNCTION public.provision\_tenant(  
+  new\_user\_id UUID,  
+  org\_name TEXT,  
+  workspace\_name TEXT DEFAULT 'Primary Workspace'  
+)  
+RETURNS void  
+LANGUAGE plpgsql  
+SECURITY DEFINER  
+SET search\_path \= public  
+AS $$  
+DECLARE  
+  new\_org\_id UUID;  
+  new\_workspace\_id UUID;  
+BEGIN  
+  IF auth.uid() IS DISTINCT FROM new\_user\_id THEN  
+    RAISE EXCEPTION 'Unauthorized: can only provision tenant for yourself';  
+  END IF;  
+
+  INSERT INTO public.organizations (name)  
+  VALUES (org\_name)  
+  RETURNING id INTO new\_org\_id;  
+
+  INSERT INTO public.organization\_members (organization\_id, user\_id, role)  
+  VALUES (new\_org\_id, new\_user\_id, 'owner');  
+
+  INSERT INTO public.workspaces (organization\_id, name, starting\_cash\_balance)  
+  VALUES (new\_org\_id, workspace\_name, NULL)  
+  RETURNING id INTO new\_workspace\_id;  
+
+  INSERT INTO public.scenarios (workspace\_id, name, is\_active\_baseline, global\_assumptions)  
+  VALUES (new\_workspace\_id, 'Baseline', true, '{}'::jsonb);  
+END;  
+$$;
+
+GRANT EXECUTE ON FUNCTION public.provision\_tenant(UUID, TEXT, TEXT) TO authenticated;
+
 ---
 
 ### **Domain 2: The Projection Engine Domain**
@@ -100,7 +142,7 @@ CREATE TABLE workspaces (
     id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
     organization\_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,  
     name VARCHAR(255) NOT NULL,  
-    starting\_cash\_balance NUMERIC(15, 2) NOT NULL DEFAULT 0.00, \-- Required for Day 1 usability \[cite: 134, 135\]  
+    starting\_cash\_balance NUMERIC(15, 2), \-- Nullable; NULL indicates onboarding is not complete and triggers the cash-balance prompt in the dashboard shell.  
     created\_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT\_TIMESTAMP  
 );
 
@@ -126,7 +168,7 @@ CREATE INDEX idx\_blocks\_scenario ON blocks(scenario\_id);
 
 #### **Component 2: Security Policies (The Firewall)**
 
-* **RLS Isolation:** Access to workspaces, scenarios, and blocks is implicitly gated by joining the parent workspace.organization\_id against the authenticated user's organization\_members list. Cross-tenant access is physically impossible at the DB query level.
+* **RLS Isolation:** The `workspaces` table has RLS enabled with SELECT and UPDATE policies that restrict access to rows where `organization_id` is in the set of organizations for which `auth.uid()` appears in `organization_members.user_id`. Because `scenarios` and `blocks` are strictly keyed to a single workspace via foreign keys, this effectively gates all projection data behind the tenant's organization; cross-tenant access is enforced as impossible at the database layer.
 
 #### **Component 3: API Route Registry & DTOs (The Contract)**
 
