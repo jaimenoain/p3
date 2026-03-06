@@ -214,6 +214,85 @@ async function resolveDefaultScenarioId(
   return scenario.id;
 }
 
+async function resolveDefaultWorkspaceId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<string | undefined> {
+  const { data: member, error: memberError } = await supabase
+    .from("organization_members")
+    .select("organization_id")
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle();
+
+  if (memberError || !member?.organization_id) {
+    return undefined;
+  }
+
+  const { data: workspace, error: workspaceError } = await supabase
+    .from("workspaces")
+    .select("id")
+    .eq("organization_id", member.organization_id)
+    .limit(1)
+    .maybeSingle();
+
+  if (workspaceError || !workspace?.id) {
+    return undefined;
+  }
+
+  return workspace.id;
+}
+
+/** Chart of Accounts entry for mapping triage (id, name, category). */
+export type ChartOfAccountEntry = {
+  id: string;
+  name: string;
+  category: string;
+};
+
+export type GetChartOfAccountsResult =
+  | { ok: true; accounts: ChartOfAccountEntry[] }
+  | { ok: false; error: string };
+
+/**
+ * Fetches chart of accounts for the authenticated user's workspace.
+ * RLS restricts to workspace_id in organizations where the user is a member.
+ */
+export async function getChartOfAccountsAction(): Promise<GetChartOfAccountsResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { ok: false, error: "Not authenticated." };
+  }
+
+  const workspaceId = await resolveDefaultWorkspaceId(supabase, user.id);
+  if (!workspaceId) {
+    return { ok: false, error: "No workspace found for this user." };
+  }
+
+  const { data, error } = await supabase
+    .from("chart_of_accounts")
+    .select("id, name, category")
+    .eq("workspace_id", workspaceId)
+    .order("name", { ascending: true });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const accounts: ChartOfAccountEntry[] = (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    category: row.category,
+  }));
+
+  return { ok: true, accounts };
+}
+
 export async function getScenarioBlocksAction(
   scenarioId?: string
 ): Promise<GetScenarioBlocksResult> {
@@ -843,5 +922,198 @@ export async function deleteBlockMutation(
   }
 
   revalidatePath("/canvas");
+  return { ok: true };
+}
+
+// --- CSV ingestion (Phase 5): parse only; no DB insert yet ---
+
+import { parseAndValidateCsv, type ParseCsvResult } from "@/lib/csv-parse";
+export type { ParsedCsvRow, ParseCsvResult } from "@/lib/csv-parse";
+
+/**
+ * Parses an uploaded CSV file and validates single-currency (USD only).
+ * Does not insert into the database. Returns raw parsed rows for preview.
+ * Rejects files that contain non-USD currency markers (e.g. EUR, €, GBP, £).
+ */
+export async function parseCsvMutation(
+  formData: FormData
+): Promise<ParseCsvResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { ok: false, error: "Not authenticated." };
+  }
+
+  const file = formData.get("file");
+  if (!file || !(file instanceof File)) {
+    return { ok: false, error: "No file provided." };
+  }
+
+  const fileName = (file as File).name?.toLowerCase() ?? "";
+  if (!fileName.endsWith(".csv")) {
+    return { ok: false, error: "File must be a CSV (.csv)." };
+  }
+
+  let csvText: string;
+  try {
+    csvText = await (file as File).text();
+  } catch {
+    return { ok: false, error: "Could not read file. Please ensure it is a text CSV." };
+  }
+  return parseAndValidateCsv(csvText);
+}
+
+/** Returns the authenticated user's default workspace id (for import commit payload). */
+export type GetDefaultWorkspaceIdResult =
+  | { ok: true; workspaceId: string }
+  | { ok: false; error: string };
+
+export async function getDefaultWorkspaceIdAction(): Promise<GetDefaultWorkspaceIdResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { ok: false, error: "Not authenticated." };
+  }
+
+  const workspaceId = await resolveDefaultWorkspaceId(supabase, user.id);
+  if (!workspaceId) {
+    return { ok: false, error: "No workspace found for this user." };
+  }
+  return { ok: true, workspaceId };
+}
+
+/** One mapped record for commit draft month (client sends these). */
+export type CommitDraftMonthRecord = {
+  transaction_date: string;
+  amount: number;
+  description: string | null;
+  account_id: string | null;
+};
+
+const CommitDraftMonthRecordSchema = z.object({
+  transaction_date: z.string().min(1),
+  amount: z.number(),
+  description: z.string().nullable(),
+  account_id: z.string().uuid().nullable(),
+});
+
+const CommitDraftMonthInputSchema = z.object({
+  workspace_id: z.string().uuid(),
+  calendar_month: z.string().min(1),
+  records: z.array(CommitDraftMonthRecordSchema).min(1),
+});
+
+export type CommitDraftMonthResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+const MONTH_NAMES: Record<string, number> = {
+  Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
+  Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12,
+};
+
+/** Parse "Mar 2026" or "2026-03" to YYYY-MM-01 date string for Postgres. */
+function parseCalendarMonthToFirstDay(value: string): string | null {
+  const trimmed = value.trim();
+  const twoPart = trimmed.split(/\s+/);
+  if (twoPart.length >= 2) {
+    const monthStr = twoPart[0].slice(0, 3);
+    const year = parseInt(twoPart[1], 10);
+    const month = MONTH_NAMES[monthStr];
+    if (month && Number.isInteger(year) && year >= 2000 && year <= 2100) {
+      return `${year}-${String(month).padStart(2, "0")}-01`;
+    }
+  }
+  const iso = trimmed.match(/^(\d{4})-(\d{1,2})/);
+  if (iso) {
+    const y = parseInt(iso[1], 10);
+    const m = parseInt(iso[2], 10);
+    if (m >= 1 && m <= 12) {
+      return `${y}-${String(m).padStart(2, "0")}-01`;
+    }
+  }
+  return null;
+}
+
+/**
+ * Creates a Draft month and bulk-inserts historical records.
+ * Inserts monthly_periods first (status: 'Draft'), then bulk insert into historical_records.
+ * RLS enforces workspace access. If historical_records insert fails, the newly created
+ * monthly_periods row is deleted to avoid a stranded draft period.
+ */
+export async function commitDraftMonthMutation(
+  input: z.infer<typeof CommitDraftMonthInputSchema>
+): Promise<CommitDraftMonthResult> {
+  const parsed = CommitDraftMonthInputSchema.safeParse(input);
+  if (!parsed.success) {
+    const msg = parsed.error.flatten().formErrors[0] ?? "Invalid payload.";
+    return { ok: false, error: typeof msg === "string" ? msg : "Invalid payload." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { ok: false, error: "Not authenticated." };
+  }
+
+  const workspaceId = await resolveDefaultWorkspaceId(supabase, user.id);
+  if (!workspaceId || workspaceId !== parsed.data.workspace_id) {
+    return { ok: false, error: "Workspace access denied." };
+  }
+
+  const calendarDate = parseCalendarMonthToFirstDay(parsed.data.calendar_month);
+  if (!calendarDate) {
+    return { ok: false, error: "Invalid calendar_month; use e.g. 'Mar 2026' or '2026-03'." };
+  }
+
+  const { data: period, error: periodError } = await supabase
+    .from("monthly_periods")
+    .insert({
+      workspace_id: parsed.data.workspace_id,
+      calendar_month: calendarDate,
+      status: "Draft",
+      ignore_variance: false,
+    })
+    .select("id")
+    .single();
+
+  if (periodError || !period?.id) {
+    if (periodError?.code === "23505") {
+      return { ok: false, error: "A period for this month already exists." };
+    }
+    return { ok: false, error: periodError?.message ?? "Failed to create draft period." };
+  }
+
+  const records = parsed.data.records.map((r) => ({
+    monthly_period_id: period.id,
+    account_id: r.account_id ?? null,
+    transaction_date: r.transaction_date,
+    amount: r.amount,
+    description: r.description ?? null,
+    is_duplicate_quarantined: false,
+  }));
+
+  const { error: recordsError } = await supabase
+    .from("historical_records")
+    .insert(records);
+
+  if (recordsError) {
+    await supabase.from("monthly_periods").delete().eq("id", period.id);
+    return { ok: false, error: recordsError.message };
+  }
+
+  revalidatePath("/actuals");
   return { ok: true };
 }

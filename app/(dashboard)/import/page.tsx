@@ -1,3 +1,5 @@
+import { ImportCsvClient } from "./import-csv-client";
+
 export default function ImportCsvPage() {
-  return <h1>Import Bank CSV</h1>;
+  return <ImportCsvClient />;
 }
