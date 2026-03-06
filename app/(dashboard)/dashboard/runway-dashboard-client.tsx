@@ -7,6 +7,7 @@ import {
   Bar,
   CartesianGrid,
   ComposedChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -48,6 +49,45 @@ function tripwireMonth(timeline: FinancialTimeline): number | null {
   return found ? found.monthIndex : null;
 }
 
+/** Base year for projection (must match financial-engine projectionMonthToKey). */
+const PROJECTION_BASE_YEAR = 2026;
+
+const MONTH_ABBREV = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/** Full label for tooltips, e.g. Jan26, Feb26, Dec27. */
+function monthIndexToLabel(monthIndex: number): string {
+  const year = PROJECTION_BASE_YEAR + Math.floor((monthIndex - 1) / 12);
+  const month = ((monthIndex - 1) % 12) + 1;
+  const date = new Date(year, month - 1, 1);
+  const shortMonth = date.toLocaleDateString("en-US", { month: "short" });
+  const shortYear = String(year).slice(-2);
+  return `${shortMonth}${shortYear}`;
+}
+
+/** Long label for Tripwire and copy, e.g. November 2026. */
+function monthIndexToLongLabel(monthIndex: number): string {
+  const year = PROJECTION_BASE_YEAR + Math.floor((monthIndex - 1) / 12);
+  const month = ((monthIndex - 1) % 12) + 1;
+  const date = new Date(year, month - 1, 1);
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+
+/**
+ * Axis label: year only on January (e.g. "26"), month abbreviation elsewhere (e.g. "Feb", "Mar").
+ * Keeps the chart legible in 12/24/36-month views without crowding.
+ */
+function getAxisMonthLabel(monthIndex: number): string {
+  const isJanuary = (monthIndex - 1) % 12 === 0;
+  if (isJanuary) {
+    const year = PROJECTION_BASE_YEAR + Math.floor((monthIndex - 1) / 12);
+    return String(year).slice(-2);
+  }
+  return MONTH_ABBREV[(monthIndex - 1) % 12];
+}
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
@@ -71,18 +111,28 @@ type RunwayTooltipProps = {
   payload?: Array<{
     value: number;
     dataKey: string;
-    payload: { month: string; grossBurn: number; endingCash: number };
+    payload: { month: string; revenue: number; grossBurn: number; endingCash: number };
   }>;
 };
 
 function RunwayTooltip({ active, payload }: RunwayTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
   const data = payload[0].payload;
+  const endingCashNegative = data.endingCash < 0;
 
   return (
     <div className="rounded-md border border-border bg-background px-3 py-2 text-xs shadow-md">
       <p className="mb-1 font-medium text-foreground">{data.month}</p>
       <div className="space-y-1">
+        <div className="flex items-center justify-between gap-4">
+          <span className="flex items-center text-muted-foreground">
+            <span className="mr-2 h-2 w-2 rounded-full bg-[var(--chart-3)]" />
+            Revenue
+          </span>
+          <span className="tabular-nums">
+            {formatCurrencyWithSymbol(data.revenue)}
+          </span>
+        </div>
         <div className="flex items-center justify-between gap-4">
           <span className="flex items-center text-muted-foreground">
             <span className="mr-2 h-2 w-2 rounded-full bg-[var(--chart-1)]" />
@@ -97,7 +147,9 @@ function RunwayTooltip({ active, payload }: RunwayTooltipProps) {
             <span className="mr-2 h-2 w-2 rounded-full bg-[var(--chart-2)]" />
             Ending Cash
           </span>
-          <span className="tabular-nums">
+          <span
+            className={`tabular-nums ${endingCashNegative ? "font-medium text-destructive" : ""}`}
+          >
             {formatCurrencyWithSymbol(data.endingCash)}
           </span>
         </div>
@@ -126,9 +178,11 @@ export function RunwayDashboardClient({
   const cashOutMonth = tripwireMonth(timeline);
 
   const chartData = timeline.map((m) => ({
-    month: `M${m.monthIndex}`,
+    month: monthIndexToLabel(m.monthIndex),
+    monthLabel: getAxisMonthLabel(m.monthIndex),
+    revenue: m.totalCashIn,
     grossBurn: m.totalCashOut,
-    endingCash: Math.max(0, m.endingCash),
+    endingCash: m.endingCash,
   }));
 
   return (
@@ -165,7 +219,7 @@ export function RunwayDashboardClient({
         {cashOutMonth !== null ? (
           <div className="rounded-lg border border-destructive bg-destructive/10 px-4 py-3">
             <p className="text-sm font-medium text-destructive tabular-nums">
-              Tripwire: Cash Out in M{cashOutMonth}
+              Tripwire: Cash Out in {monthIndexToLongLabel(cashOutMonth)}
             </p>
           </div>
         ) : (
@@ -215,7 +269,7 @@ export function RunwayDashboardClient({
                   strokeDasharray="3 3"
                 />
                 <XAxis
-                  dataKey="month"
+                  dataKey="monthLabel"
                   tick={{ fontSize: 12, className: "tabular-nums" }}
                   axisLine={false}
                   tickLine={false}
@@ -227,10 +281,24 @@ export function RunwayDashboardClient({
                   tickLine={false}
                   tickFormatter={(v) => formatCurrency(v)}
                   tickMargin={8}
+                  domain={["auto", "auto"]}
+                />
+                <ReferenceLine
+                  y={0}
+                  stroke="var(--border)"
+                  strokeDasharray="4 4"
+                  strokeOpacity={0.8}
                 />
                 <Tooltip
                   cursor={{ stroke: "var(--border)", strokeDasharray: "4 4" }}
                   content={<RunwayTooltip />}
+                />
+                <Bar
+                  dataKey="revenue"
+                  name="Revenue"
+                  fill="var(--chart-3)"
+                  radius={[4, 4, 0, 0]}
+                  barSize={18}
                 />
                 <Bar
                   dataKey="grossBurn"

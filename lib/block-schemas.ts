@@ -124,28 +124,26 @@ const OpExExpenseTypeSchema = z.enum(["fixed", "variable", "one-off"]);
 
 export const OpExPayloadSchema = z
   .object({
-    expenseType: OpExExpenseTypeSchema.optional().default("fixed"),
-    expenseName: z.string().min(1, "Expense name is required"),
+    expenseType: z.preprocess(
+      (val) => (val === null || val === undefined ? "fixed" : val),
+      OpExExpenseTypeSchema
+    ),
+    expenseName: z.preprocess(
+      (val) => (val === null ? "" : val),
+      z.string().min(1, "Expense name is required")
+    ),
     // Fixed (recurring): monthly cost with optional growth
     monthlyCost: z
-      .coerce.number()
-      .min(0, "Monthly cost must be 0 or greater")
-      .optional(),
+      .preprocess((val) => (val === null || val === "" ? undefined : val), z.coerce.number().min(0, "Monthly cost must be 0 or greater").optional()),
     annualGrowthRatePercent: z
-      .coerce.number()
-      .min(0, "Annual growth rate % must be between 0 and 1")
-      .max(1, "Annual growth rate % must be between 0 and 1")
-      .optional(),
+      .preprocess((val) => (val === null || val === "" ? undefined : val), z.coerce.number().min(0, "Annual growth rate % must be between 0 and 1").max(1, "Annual growth rate % must be between 0 and 1").optional()),
     // Variable: scales with revenue / customers
     percentageOfRevenue: z
-      .coerce.number()
-      .min(0, "Percentage of Revenue must be between 0 and 1")
-      .max(1, "Percentage of Revenue must be between 0 and 1")
-      .optional(),
-    fixedCostPerCustomer: z.coerce.number().min(0).optional(),
+      .preprocess((val) => (val === null || val === "" ? undefined : val), z.coerce.number().min(0, "Percentage of Revenue must be between 0 and 1").max(1, "Percentage of Revenue must be between 0 and 1").optional()),
+    fixedCostPerCustomer: z.preprocess((val) => (val === null || val === "" ? undefined : val), z.coerce.number().min(0).optional()),
     // One-off: single amount in a given month
-    amount: z.coerce.number().min(0, "Amount must be 0 or greater").optional(),
-    month: MonthStringSchema.optional(),
+    amount: z.preprocess((val) => (val === null || val === "" ? undefined : val), z.coerce.number().min(0, "Amount must be 0 or greater").optional()),
+    month: z.preprocess((val) => (val === null || val === "" ? undefined : val), MonthStringSchema.optional()),
   })
   .merge(BlockDependenciesSchema);
 

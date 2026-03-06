@@ -113,11 +113,13 @@ function FinancialTable({ timeline }: { timeline: FinancialTimeline }) {
 
   const rows = buildFinancialTableRows(timeline);
 
+  const keySummaryIds = new Set(["net-burn", "ending-cash"]);
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="sticky left-0 z-10 w-[180px] bg-background">
+          <TableHead className="sticky left-0 z-10 min-w-[220px] w-[240px] bg-background">
             Metric
           </TableHead>
           {timeline.map((m) => (
@@ -133,22 +135,38 @@ function FinancialTable({ timeline }: { timeline: FinancialTimeline }) {
       <TableBody>
         {rows.map((row) => {
           const isSummary = row.kind === "summary";
-          const labelClasses = isSummary
-            ? "sticky left-0 z-10 bg-background font-medium"
-            : "sticky left-0 z-10 bg-background pl-6 text-muted-foreground";
+          const isKeySummary = keySummaryIds.has(row.id);
+
+          const rowClasses = isKeySummary
+            ? "bg-slate-800 text-slate-50 hover:bg-slate-800 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-700"
+            : isSummary
+              ? "bg-muted/50"
+              : undefined;
+
+          const labelClasses = isKeySummary
+            ? "sticky left-0 z-10 bg-slate-800 font-semibold text-slate-50 dark:bg-slate-700 dark:text-slate-100"
+            : isSummary
+              ? "sticky left-0 z-10 bg-muted/50 font-medium"
+              : "sticky left-0 z-10 bg-background pl-6 text-muted-foreground";
 
           return (
-            <TableRow key={row.id}>
+            <TableRow key={row.id} className={rowClasses}>
               <TableCell className={labelClasses}>{row.label}</TableCell>
               {row.values.map((value, index) => {
                 const isEndingCashRow = row.id === "ending-cash";
                 const isWarning = isEndingCashRow && value < 0;
+                const valueClasses = isKeySummary
+                  ? "font-semibold text-right tabular-nums"
+                  : "text-right tabular-nums";
+                const warningClasses = isWarning
+                  ? isKeySummary
+                    ? "text-red-300 dark:text-red-400"
+                    : "text-destructive"
+                  : "";
                 return (
                   <TableCell
                     key={`${row.id}-${index}`}
-                    className={`text-right tabular-nums${
-                      isWarning ? " text-destructive" : ""
-                    }`}
+                    className={`${valueClasses} ${warningClasses}`}
                   >
                     {formatAccounting(value)}
                   </TableCell>

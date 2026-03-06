@@ -277,24 +277,28 @@ export function ProjectionCanvasClient({ scenarioId, initialBlocks }: Props) {
           if (!open && newBlockInModal) void handleCloseNewBlockModal();
         }}
       >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[90dvh] max-w-md flex-col overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b border-border px-6 py-4">
             <DialogTitle>Configure new block</DialogTitle>
           </DialogHeader>
           {newBlockInModal && (
-            <BlockCard
-              block={newBlockInModal}
-              allBlocks={blocks}
-              onUpdated={(updated) => {
-                setNewBlockInModal(updated);
-              }}
-              onDeleted={() => setNewBlockInModal(null)}
-              runWithRecalculation={runWithRecalculation}
-              showToast={setToastMessage}
-              isNewBlockModal
-              onSaveSuccess={handleNewBlockSaved}
-              onCancel={() => void handleCloseNewBlockModal()}
-            />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="p-6 pt-4">
+                <BlockCard
+                  block={newBlockInModal}
+                  allBlocks={blocks}
+                  onUpdated={(updated) => {
+                    setNewBlockInModal(updated);
+                  }}
+                  onDeleted={() => setNewBlockInModal(null)}
+                  runWithRecalculation={runWithRecalculation}
+                  showToast={setToastMessage}
+                  isNewBlockModal
+                  onSaveSuccess={handleNewBlockSaved}
+                  onCancel={() => void handleCloseNewBlockModal()}
+                />
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -315,10 +319,38 @@ type BlockCardProps = {
   onCancel?: () => void;
 };
 
-/** Labels shown in compact read-only view; the rest are behind "Show more". */
+/** Payload keys that store a decimal 0–1; form shows and accepts 0–100 (percentage). */
+const PERCENTAGE_PAYLOAD_KEYS = new Set([
+  "employerBurdenPercent",
+  "monthlyChurnPercent",
+  "monthlyMrrGrowthPercent",
+  "annualGrowthRatePercent",
+  "percentageOfRevenue",
+]);
+
+/** Convert stored decimal (0–1) to display percentage (0–100). Values > 1 are treated as already percentage. */
+function decimalToPercentageDisplay(
+  value: string | number | null | undefined
+): string {
+  if (value === "" || value === null || value === undefined) return "";
+  const n = Number(value);
+  if (Number.isNaN(n)) return "";
+  if (n > 1) return String(n);
+  return String(n * 100);
+}
+
+/** Convert form percentage (0–100) to decimal (0–1) for payload. */
+function percentageToDecimal(value: string): number | null {
+  if (value === "") return null;
+  const n = Number(value);
+  if (Number.isNaN(n)) return null;
+  return n / 100;
+}
+
+/** Labels shown in compact read-only view; the rest are behind "Show more". Up to 4 shown in two columns when width allows. */
 const KEY_READONLY_LABELS: Record<BlockType, string[]> = {
   Personnel: ["Role name", "Type", "Monthly gross salary", "Headcount count"],
-  Revenue: ["Starting MRR", "New customers (source)", "ARPA"],
+  Revenue: ["Starting MRR", "New customers (source)", "ARPA", "Monthly churn %"],
   Marketing: ["Monthly ad spend", "Target CAC"],
   OpEx: ["Expense name", "Expense type", "Monthly cost"],
   Capital: ["Funding type", "Amount", "Month received"],
@@ -329,7 +361,7 @@ function getOpExKeyLabels(expenseType: string): string[] {
     return ["Expense name", "Expense type", "Percentage of Revenue"];
   if (expenseType === "one-off")
     return ["Expense name", "Expense type", "Amount", "Month"];
-  return ["Expense name", "Expense type", "Monthly cost"];
+  return ["Expense name", "Expense type", "Monthly cost", "Annual growth rate %"];
 }
 
 type ReadOnlyRowItem = { label: string; value: string | number | null | undefined };
@@ -436,15 +468,18 @@ function getReadOnlyRows(
 function ReadOnlyRow({
   label,
   value,
+  isPercentage,
 }: {
   label: string;
   value: string | number | null | undefined;
+  isPercentage?: boolean;
 }) {
-  const display = value === "" || value === null || value === undefined ? "—" : String(value);
+  const raw = value === "" || value === null || value === undefined ? "—" : String(value);
+  const display = isPercentage && raw !== "—" ? `${raw}%` : raw;
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
-      <span className="text-sm tabular-nums">{display}</span>
+      <span className="text-xs text-muted-foreground/70">{label}</span>
+      <span className="text-sm font-semibold tabular-nums text-foreground">{display}</span>
     </div>
   );
 }
@@ -483,12 +518,22 @@ function ReadOnlyCardContent({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
         {keyRows.map(({ label, value }) => (
-          <ReadOnlyRow key={label} label={label} value={value} />
+          <ReadOnlyRow
+            key={label}
+            label={label}
+            value={value}
+            isPercentage={label.includes("%") || label.toLowerCase().includes("percent")}
+          />
         ))}
         {isReadOnlyExpanded && restRows.map(({ label, value }) => (
-          <ReadOnlyRow key={label} label={label} value={value} />
+          <ReadOnlyRow
+            key={label}
+            label={label}
+            value={value}
+            isPercentage={label.includes("%") || label.toLowerCase().includes("percent")}
+          />
         ))}
       </div>
       {hasRest && (
@@ -554,8 +599,8 @@ function BlockCard({
     if (block.type === "Personnel") {
       base.roleName = String(initialPayload.roleName ?? "");
       base.monthlyGrossSalary = String(initialPayload.monthlyGrossSalary ?? "");
-      base.employerBurdenPercent = String(
-        initialPayload.employerBurdenPercent ?? ""
+      base.employerBurdenPercent = decimalToPercentageDisplay(
+        initialPayload.employerBurdenPercent
       );
       base.startMonth = String(initialPayload.startMonth ?? "");
       base.endMonth = String(initialPayload.endMonth ?? "");
@@ -574,13 +619,13 @@ function BlockCard({
           ? initialNewCustomersDependency.value ?? 0
           : 0
       );
-      base.monthlyMrrGrowthPercent = String(
-        initialPayload.monthlyMrrGrowthPercent ?? ""
+      base.monthlyMrrGrowthPercent = decimalToPercentageDisplay(
+        initialPayload.monthlyMrrGrowthPercent
       );
       base.arpa = String(initialPayload.arpa ?? "");
       base.setupFee = String(initialPayload.setupFee ?? "");
-      base.monthlyChurnPercent = String(
-        initialPayload.monthlyChurnPercent ?? ""
+      base.monthlyChurnPercent = decimalToPercentageDisplay(
+        initialPayload.monthlyChurnPercent
       );
       base.billingFrequency = String(
         initialPayload.billingFrequency ?? "Monthly"
@@ -595,11 +640,11 @@ function BlockCard({
       base.expenseType = String(initialPayload.expenseType ?? "fixed");
       base.expenseName = String(initialPayload.expenseName ?? "");
       base.monthlyCost = String(initialPayload.monthlyCost ?? "");
-      base.annualGrowthRatePercent = String(
-        initialPayload.annualGrowthRatePercent ?? ""
+      base.annualGrowthRatePercent = decimalToPercentageDisplay(
+        initialPayload.annualGrowthRatePercent
       );
-      base.percentageOfRevenue = String(
-        initialPayload.percentageOfRevenue ?? ""
+      base.percentageOfRevenue = decimalToPercentageDisplay(
+        initialPayload.percentageOfRevenue
       );
       base.fixedCostPerCustomer = String(
         initialPayload.fixedCostPerCustomer ?? ""
@@ -711,6 +756,9 @@ function BlockCard({
     Object.entries(formState).forEach(([key, value]) => {
       if (value === "") {
         payload[key] = null;
+      } else if (PERCENTAGE_PAYLOAD_KEYS.has(key)) {
+        const decimal = percentageToDecimal(value);
+        payload[key] = decimal === null ? null : decimal;
       } else {
         payload[key] = value;
       }
@@ -1001,8 +1049,9 @@ function BlockCard({
                     }
                     disabled={isUpdating}
                     min={0}
-                    max={1}
-                    step="any"
+                    max={100}
+                    step={0.1}
+                    placeholder="e.g. 25.5"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -1257,8 +1306,9 @@ function BlockCard({
                   }
                   disabled={isUpdating}
                   min={0}
-                  max={1}
-                  step="any"
+                  max={100}
+                  step={0.1}
+                  placeholder="e.g. 2.5"
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -1282,9 +1332,9 @@ function BlockCard({
                   }
                   disabled={isUpdating}
                   min={0}
-                  max={1}
-                  step="any"
-                  placeholder="e.g. 0.05 for 5%"
+                  max={100}
+                  step={0.1}
+                  placeholder="e.g. 5"
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -1464,8 +1514,9 @@ function BlockCard({
                       }
                       disabled={isUpdating}
                       min={0}
-                      max={1}
-                      step="any"
+                      max={100}
+                      step={0.1}
+                      placeholder="e.g. 3"
                     />
                   </div>
                 </>
@@ -1480,7 +1531,7 @@ function BlockCard({
                       Percentage of Revenue
                     </label>
                     <span className="text-xs text-muted-foreground">
-                      Decimal (e.g. 0.029 for 2.9%)
+                      e.g. 2.9 for 2.9%
                     </span>
                     <Input
                       id={`${block.id}-percentageOfRevenue`}
@@ -1493,8 +1544,9 @@ function BlockCard({
                       }
                       disabled={isUpdating}
                       min={0}
-                      max={1}
-                      step="any"
+                      max={100}
+                      step={0.1}
+                      placeholder="e.g. 2.9"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
