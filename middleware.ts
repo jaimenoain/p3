@@ -33,7 +33,7 @@ function isAuthPath(pathname: string): boolean {
   return authPaths.some((path) => pathname === path || pathname.startsWith(path + "/"));
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: { headers: request.headers },
   });
