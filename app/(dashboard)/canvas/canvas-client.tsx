@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import type { BlockRecord, BlockType, NumericInputMode } from "../actions";
 import {
   createBlockMutation,
   updateBlockMutation,
   updateBlockDependencyMutation,
   updateScenarioBlocksMutation,
+  deleteBlockMutation,
 } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,30 @@ const BLOCK_TYPES: BlockType[] = [
   "OpEx",
   "Capital",
 ];
+
+/**
+ * Derives the "new customers" output value from a block when it is used as a
+ * reference (e.g. Revenue block's new customers source). Uses block payload only;
+ * no timeline/ramp so Marketing is spend/CAC, Personnel (sales) is headcount ×
+ * clients per month at full ramp.
+ */
+function getReferencedNewCustomersValue(refBlock: BlockRecord): number | null {
+  const p = (refBlock.payload ?? {}) as Record<string, unknown>;
+  if (refBlock.type === "Marketing") {
+    const spend = Number(p.monthlyAdSpend ?? 0);
+    const cac = Number(p.targetCac ?? 0);
+    if (cac <= 0) return null;
+    return Math.round((spend / cac) * 100) / 100;
+  }
+  if (refBlock.type === "Personnel") {
+    const roleType = String(p.roleType ?? "standard");
+    if (roleType !== "sales") return null;
+    const headcount = Number(p.headcountCount ?? 1) || 0;
+    const perMonth = Number(p.salesClientsPerMonth ?? 0) || 0;
+    return Math.round(headcount * perMonth * 100) / 100;
+  }
+  return null;
+}
 
 type Props = {
   scenarioId: string;
@@ -161,6 +186,9 @@ export function ProjectionCanvasClient({ scenarioId, initialBlocks }: Props) {
                     prev.map((b) => (b.id === updated.id ? updated : b))
                   );
                 }}
+                onDeleted={(blockId) => {
+                  setBlocks((prev) => prev.filter((b) => b.id !== blockId));
+                }}
                 runWithRecalculation={runWithRecalculation}
                 showToast={(message) => setToastMessage(message)}
               />
@@ -192,6 +220,9 @@ export function ProjectionCanvasClient({ scenarioId, initialBlocks }: Props) {
                         setBlocks((prev) =>
                           prev.map((b) => (b.id === updated.id ? updated : b))
                         );
+                      }}
+                      onDeleted={(blockId) => {
+                        setBlocks((prev) => prev.filter((b) => b.id !== blockId));
                       }}
                       runWithRecalculation={runWithRecalculation}
                       showToast={(message) => setToastMessage(message)}
@@ -228,6 +259,7 @@ type BlockCardProps = {
   block: BlockRecord;
   allBlocks: BlockRecord[];
   onUpdated: (block: BlockRecord) => void;
+  onDeleted: (blockId: string) => void;
   runWithRecalculation: <T>(fn: () => Promise<T>) => Promise<T>;
   showToast: (message: string) => void;
 };
@@ -252,11 +284,13 @@ function BlockCard({
   block,
   allBlocks,
   onUpdated,
+  onDeleted,
   runWithRecalculation,
   showToast,
 }: BlockCardProps) {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isUpdating, startUpdateTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const [isActive, setIsActive] = useState(block.is_active);
 
   const initialPayload = (block.payload ?? {}) as Record<string, unknown>;
@@ -499,6 +533,24 @@ function BlockCard({
     });
   }
 
+  async function handleDelete() {
+    if (
+      !confirm(
+        "Are you sure you want to delete this block? This cannot be undone."
+      )
+    ) {
+      return;
+    }
+    startDeleteTransition(async () => {
+      const result = await deleteBlockMutation({ blockId: block.id });
+      if (!result.ok) {
+        showToast(result.error);
+        return;
+      }
+      onDeleted(block.id);
+    });
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -528,6 +580,21 @@ function BlockCard({
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => void handleDelete()}
+              disabled={isDeleting}
+              aria-label="Delete block"
+              className="text-muted-foreground hover:text-destructive"
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Trash2 className="h-4 w-4" aria-hidden />
+              )}
+            </Button>
             {!isEditing && (
               <Button
                 type="button"
@@ -815,44 +882,62 @@ function BlockCard({
                 </div>
               )}
               {newCustomersMode === "Referenced" && (
-                <div className="flex flex-col gap-1">
-                  <label
-                    className="text-sm font-medium"
-                    htmlFor={`${block.id}-newCustomers-reference`}
-                  >
-                    Reference block
-                  </label>
-                  <select
-                    id={`${block.id}-newCustomers-reference`}
-                    name="newCustomersReference"
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    value={newCustomersReferenceId}
-                    onChange={(event) =>
-                      void handleNewCustomersReferenceChange(event.target.value)
-                    }
-                    disabled={isUpdating}
-                  >
-                    <option value="">Select block...</option>
-                    {allBlocks.map((candidate) => {
-                      const downstreamIds = getDownstreamIdsForBlock();
-                      const disabled =
-                        candidate.id === block.id ||
-                        downstreamIds.has(candidate.id);
-                      const label = candidate.title
-                        ? `${candidate.title} (${candidate.type})`
-                        : candidate.type;
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label
+                      className="text-sm font-medium"
+                      htmlFor={`${block.id}-newCustomers-reference`}
+                    >
+                      Reference block
+                    </label>
+                    <select
+                      id={`${block.id}-newCustomers-reference`}
+                      name="newCustomersReference"
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      value={newCustomersReferenceId}
+                      onChange={(event) =>
+                        void handleNewCustomersReferenceChange(event.target.value)
+                      }
+                      disabled={isUpdating}
+                    >
+                      <option value="">Select block...</option>
+                      {allBlocks.map((candidate) => {
+                        const downstreamIds = getDownstreamIdsForBlock();
+                        const disabled =
+                          candidate.id === block.id ||
+                          downstreamIds.has(candidate.id);
+                        const label = candidate.title
+                          ? `${candidate.title} (${candidate.type})`
+                          : candidate.type;
+                        return (
+                          <option
+                            key={candidate.id}
+                            value={candidate.id}
+                            disabled={disabled}
+                          >
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                  {newCustomersReferenceId && (() => {
+                    const refBlock = allBlocks.find(
+                      (b) => b.id === newCustomersReferenceId
+                    );
+                    const refValue = refBlock
+                      ? getReferencedNewCustomersValue(refBlock)
+                      : null;
+                    if (refValue !== null) {
                       return (
-                        <option
-                          key={candidate.id}
-                          value={candidate.id}
-                          disabled={disabled}
-                        >
-                          {label}
-                        </option>
+                        <p className="text-xs text-muted-foreground">
+                          Value from reference: <span className="tabular-nums font-medium text-foreground">{refValue}</span> new customers per month
+                        </p>
                       );
-                    })}
-                  </select>
-                </div>
+                    }
+                    return null;
+                  })()}
+                </>
               )}
               <div className="flex flex-col gap-1">
                 <label
@@ -902,8 +987,11 @@ function BlockCard({
                   className="text-sm font-medium"
                   htmlFor={`${block.id}-monthlyMrrGrowthPercent`}
                 >
-                  Monthly MRR growth %
+                  Upsell / expansion growth %
                 </label>
+                <span className="text-xs text-muted-foreground">
+                  Monthly growth on existing MRR only (e.g. price increases, upsell). Does not apply to new customers.
+                </span>
                 <Input
                   id={`${block.id}-monthlyMrrGrowthPercent`}
                   name="monthlyMrrGrowthPercent"
@@ -1214,7 +1302,19 @@ function BlockCard({
                   label="New customers (source)"
                   value={
                     newCustomersMode === "Referenced" && newCustomersReferenceId
-                      ? `From ${allBlocks.find((b) => b.id === newCustomersReferenceId)?.title ?? "block"}`
+                      ? (() => {
+                          const refBlock = allBlocks.find(
+                            (b) => b.id === newCustomersReferenceId
+                          );
+                          const refTitle = refBlock?.title ?? refBlock?.type ?? "block";
+                          const refValue = refBlock
+                            ? getReferencedNewCustomersValue(refBlock)
+                            : null;
+                          if (refValue !== null) {
+                            return `${refValue} (from ${refTitle})`;
+                          }
+                          return `From ${refTitle}`;
+                        })()
                       : formState.newCustomersStatic
                   }
                 />
@@ -1224,7 +1324,7 @@ function BlockCard({
                   value={formState.monthlyChurnPercent}
                 />
                 <ReadOnlyRow
-                  label="Monthly MRR growth %"
+                  label="Upsell / expansion growth %"
                   value={
                     formState.monthlyMrrGrowthPercent !== undefined &&
                     formState.monthlyMrrGrowthPercent !== ""

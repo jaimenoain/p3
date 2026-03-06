@@ -102,8 +102,8 @@ const RevenuePayloadSchema = z
     .union([
       z
         .coerce.number()
-        .min(0, "Monthly MRR growth % must be between 0 and 1")
-        .max(1, "Monthly MRR growth % must be between 0 and 1"),
+        .min(0, "Upsell / expansion growth % must be between 0 and 1")
+        .max(1, "Upsell / expansion growth % must be between 0 and 1"),
       z.null(),
     ])
     .optional(),
@@ -192,6 +192,8 @@ export type UpdateBlockDependencyResult =
 export type UpdateScenarioBlocksResult =
   | { ok: true; block: BlockRecord }
   | { ok: false; error: string };
+
+export type DeleteBlockResult = { ok: true } | { ok: false; error: string };
 
 type PayloadWithDependencies = {
   dependencies?: Record<string, NumericInputConfig>;
@@ -443,6 +445,51 @@ function getPayloadSchemaForType(type: BlockType) {
   }
 }
 
+/**
+ * Minimal default payload per block type so dependency-only updates validate
+ * when the block has never been saved (payload is empty).
+ */
+function getDefaultPayloadForDependencyUpdate(type: BlockType): Record<string, unknown> {
+  switch (type) {
+    case "Revenue":
+      return {
+        startingMrr: 0,
+        arpa: 0,
+        monthlyChurnPercent: 0,
+        billingFrequency: "Monthly",
+      };
+    case "Personnel":
+      return {
+        roleName: "Role",
+        monthlyGrossSalary: 0,
+        employerBurdenPercent: 0,
+        startMonth: "2020-01",
+        headcountCount: 1,
+        roleType: "standard",
+      };
+    case "Marketing":
+      return {
+        monthlyAdSpend: 0,
+        targetCac: 0,
+        salesCycleLagMonths: 0,
+      };
+    case "OpEx":
+      return {
+        expenseName: "Expense",
+        monthlyCost: 0,
+        annualGrowthRatePercent: 0,
+      };
+    case "Capital":
+      return {
+        fundingType: "Equity",
+        amount: 0,
+        monthReceived: "2020-01",
+      };
+    default:
+      return {};
+  }
+}
+
 const UpdateBlockDependencyInputSchema = z.object({
   blockId: z.string().uuid(),
   field: z.string().min(1),
@@ -678,7 +725,15 @@ export async function updateBlockDependencyMutation(
     [field]: nextConfig,
   };
 
+  // For new blocks, basePayload may be empty so validation would fail (e.g. Revenue
+  // requires startingMrr, arpa, etc.; z.coerce.number() on undefined yields NaN).
+  // Merge type-specific defaults so dependency-only updates validate.
+  const defaults =
+    Object.keys(basePayload).length === 0
+      ? getDefaultPayloadForDependencyUpdate(currentBlock.type as BlockType)
+      : {};
   const nextPayload = {
+    ...defaults,
     ...basePayload,
     dependencies: nextDeps,
   };
@@ -777,4 +832,51 @@ export async function updateScenarioBlocksMutation(
     ok: true,
     block: data as BlockRecord,
   };
+}
+
+const DeleteBlockInputSchema = z.object({
+  blockId: z.string().uuid(),
+});
+
+export async function deleteBlockMutation(
+  input: z.infer<typeof DeleteBlockInputSchema>
+): Promise<DeleteBlockResult> {
+  const parsed = DeleteBlockInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Invalid block id." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { ok: false, error: "Not authenticated." };
+  }
+
+  const { blockId } = parsed.data;
+
+  const {
+    data: existingBlock,
+    error: selectError,
+  } = await supabase
+    .from("blocks")
+    .select("id")
+    .eq("id", blockId)
+    .maybeSingle();
+
+  if (selectError || !existingBlock) {
+    return { ok: false, error: "Block not found or access denied." };
+  }
+
+  const { error } = await supabase.from("blocks").delete().eq("id", blockId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/canvas");
+  return { ok: true };
 }

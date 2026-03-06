@@ -200,10 +200,10 @@ For **sales** roles (role type Sales): *new\_clients* per month is derived from 
 | **New customers (source)** | Number of new customers per month. **Static** (constant value, e.g. 0) or **Referenced** (e.g. Marketing’s new\_customers\_generated, or Personnel sales’ new\_clients). Multiplied by ARPA to get MRR growth from acquisitions. |
 | **ARPA** | Average Revenue Per Account. Used to convert new customer count into MRR contribution. |
 | **Monthly Churn %** | Applied to existing MRR each month. |
-| **Monthly MRR growth %** | Optional. Static only; e.g. 0.05 for 5% MoM. Applied additively to MRR before churn (see formula). Default 0. |
+| **Upsell / expansion growth %** | Optional. Monthly growth applied to *existing* MRR only (e.g. price increases, upsell, expansion). Static only; e.g. 0.05 for 5% MoM. Does not apply to revenue from new customers (that is driven by New customers × ARPA). Default 0. |
 | **Billing Frequency** | Monthly or Annual Prepaid. If Annual: cash injection \= 12 months of MRR in Month 1; $0 cash inflow for months 2–12. Cohort renewal at Month 13 \= (initial cohort customers − cumulative churn) × annual ticket. |
 
-MRR formula (monthly): MRR(n) \= MRR(n-1) \+ (New Customers(n) × ARPA) \+ (MRR(n-1) × growth%) − (MRR(n-1) × Churn %). *New Customers(n)* comes from the block’s New customers (source). *growth%* is Monthly MRR growth % (0 if not set).
+MRR formula (monthly): MRR(n) \= MRR(n-1) \+ (New Customers(n) × ARPA) \+ (MRR(n-1) × growth%) − (MRR(n-1) × Churn %). *New Customers(n)* comes from the block’s New customers (source). *growth%* is Upsell / expansion growth % (0 if not set), applied only to the existing MRR base.
 
 ## **5.3 Marketing Block**
 
