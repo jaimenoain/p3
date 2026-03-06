@@ -41,8 +41,8 @@ function getNumber(props: Record<string, unknown>, key: string, fallback = 0): n
   return fallback;
 }
 
-/** Read MRR from a Revenue block payload. Tries canonical keys so revenue is always included in runway. */
-function getRevenueMrrFromPayload(p: Record<string, unknown>): number {
+/** Starting MRR from a Revenue block payload (static; used as MRR(0)). */
+function getRevenueStartingMrrFromPayload(p: Record<string, unknown>): number {
   const candidates = ["startingMrr", "mrr", "StartingMrr"];
   for (const key of candidates) {
     const val = p[key];
@@ -55,6 +55,96 @@ function getRevenueMrrFromPayload(p: Record<string, unknown>): number {
     }
   }
   return 0;
+}
+
+/** New customers per month (1..12) from Marketing: spend/CAC. No lag here; lag applied when Revenue consumes. */
+function getMarketingNewCustomersByMonth(block: BlockDTO): number[] {
+  const p = block.properties;
+  const spend = getNumber(p, "monthlyAdSpend", 0);
+  const cac = getNumber(p, "targetCac", 0);
+  const perMonth = cac > 0 ? spend / cac : 0;
+  return Array(MONTHS).fill(perMonth);
+}
+
+/** New clients per month (1..12) from Personnel sales role: headcount × clients per month, in [startMonth,endMonth]. */
+function getPersonnelNewClientsByMonth(block: BlockDTO): number[] {
+  const p = block.properties;
+  const roleType = (p.roleType as string) ?? "standard";
+  if (roleType !== "sales") return Array(MONTHS).fill(0);
+  const headcount = Math.max(0, Math.floor(getNumber(p, "headcountCount", 1)));
+  const clientsPerMonth = getNumber(p, "salesClientsPerMonth", 0);
+  const startKey = (p.startMonth as string) ?? "2026-01";
+  const endKey = (p.endMonth as string) ?? null;
+  const out: number[] = [];
+  for (let m = 1; m <= MONTHS; m++) {
+    const monthKey = projectionMonthToKey(m);
+    if (!isMonthInRange(monthKey, startKey, endKey)) {
+      out.push(0);
+      continue;
+    }
+    out.push(headcount * clientsPerMonth);
+  }
+  return out;
+}
+
+/** Build map blockId -> new customers per month (1..12) for blocks that expose a new-customers output. */
+function buildNewCustomersByBlock(
+  active: BlockDTO[]
+): Map<string, number[]> {
+  const map = new Map<string, number[]>();
+  for (const b of active) {
+    if (b.type === "Marketing") {
+      map.set(b.blockId, getMarketingNewCustomersByMonth(b));
+    } else if (b.type === "Personnel") {
+      map.set(b.blockId, getPersonnelNewClientsByMonth(b));
+    }
+  }
+  return map;
+}
+
+/** Resolve new customers for a Revenue block for month index (1-based). Handles Static and Referenced; applies Marketing lag. */
+function resolveRevenueNewCustomers(
+  monthIndex: number,
+  revenueBlock: BlockDTO,
+  active: BlockDTO[],
+  newCustomersByBlock: Map<string, number[]>
+): number {
+  const deps = (revenueBlock.properties.dependencies as Record<string, { mode?: string; value?: number; referenceId?: string }>) ?? {};
+  const nc = deps.newCustomers;
+  if (!nc) return 0;
+  if (nc.mode === "Static" && typeof nc.value === "number" && !Number.isNaN(nc.value)) {
+    return nc.value;
+  }
+  if (nc.mode === "Referenced" && nc.referenceId) {
+    const refBlock = active.find((b) => b.blockId === nc.referenceId);
+    if (!refBlock) return 0;
+    const series = newCustomersByBlock.get(refBlock.blockId);
+    if (!series) return 0;
+    // If source is Marketing, apply its sales cycle lag (value generated in month M appears in Revenue in month M + lag).
+    let readMonthIndex = monthIndex;
+    if (refBlock.type === "Marketing") {
+      const lag = Math.max(0, Math.floor(getNumber(refBlock.properties, "salesCycleLagMonths", 0)));
+      readMonthIndex = monthIndex - lag;
+    }
+    if (readMonthIndex < 1) return 0;
+    return series[readMonthIndex - 1] ?? 0;
+  }
+  return 0;
+}
+
+/** Compute MRR for one Revenue block for one month: MRR(m) = MRR(m-1) + newCust*ARPA + growth*MRR(m-1) - churn*MRR(m-1). */
+function revenueBlockMrr(
+  prevMrr: number,
+  newCustomers: number,
+  p: Record<string, unknown>
+): number {
+  const arpa = getNumber(p, "arpa", 0);
+  const churn = getNumber(p, "monthlyChurnPercent", 0);
+  const growth = getNumber(p, "monthlyMrrGrowthPercent", 0) ?? 0;
+  const fromNew = newCustomers * arpa;
+  const fromGrowth = prevMrr * growth;
+  const fromChurn = prevMrr * churn;
+  return prevMrr + fromNew + fromGrowth - fromChurn;
 }
 
 /** YYYY-MM for projection month (e.g. 2026-01). V1: use base year 2026, month 1..12. */
@@ -86,17 +176,28 @@ export function calculateFinancials(
 ): FinancialTimeline {
   const active = blocks.filter((b) => b.isActive);
   const timeline: FinancialTimeline = [];
+  const newCustomersByBlock = buildNewCustomersByBlock(active);
+  const revenueMrrPrev = new Map<string, number>();
+  for (const b of active) {
+    if (b.type === "Revenue") {
+      revenueMrrPrev.set(b.blockId, getRevenueStartingMrrFromPayload(b.properties));
+    }
+  }
 
   let runningCash = startingCash;
 
   for (let m = 1; m <= MONTHS; m++) {
     const monthKey = projectionMonthToKey(m);
 
-    // --- Revenue: MRR (and cash in from recurring billing). All active Revenue blocks contribute.
+    // --- Revenue: MRR from each active Revenue block (starting MRR + referenced/static new customers × ARPA − churn + growth).
     let mrr = 0;
     for (const b of active) {
       if (b.type !== "Revenue") continue;
-      mrr += getRevenueMrrFromPayload(b.properties);
+      const prevMrr = revenueMrrPrev.get(b.blockId) ?? 0;
+      const newCust = resolveRevenueNewCustomers(m, b, active, newCustomersByBlock);
+      const blockMrr = Math.max(0, revenueBlockMrr(prevMrr, newCust, b.properties));
+      revenueMrrPrev.set(b.blockId, blockMrr);
+      mrr += blockMrr;
     }
 
     // --- Capital: one-time cash in for this month
