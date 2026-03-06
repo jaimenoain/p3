@@ -232,6 +232,22 @@ type BlockCardProps = {
   showToast: (message: string) => void;
 };
 
+function ReadOnlyRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number | null | undefined;
+}) {
+  const display = value === "" || value === null || value === undefined ? "—" : String(value);
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-sm tabular-nums">{display}</span>
+    </div>
+  );
+}
+
 function BlockCard({
   block,
   allBlocks,
@@ -268,6 +284,13 @@ function BlockCard({
       base.startMonth = String(initialPayload.startMonth ?? "");
       base.endMonth = String(initialPayload.endMonth ?? "");
       base.headcountCount = String(initialPayload.headcountCount ?? "1");
+      base.roleType = String(initialPayload.roleType ?? "standard");
+      base.salesClientsPerMonth = String(
+        initialPayload.salesClientsPerMonth ?? ""
+      );
+      base.salesMonthsToFirstClient = String(
+        initialPayload.salesMonthsToFirstClient ?? ""
+      );
     } else if (block.type === "Revenue") {
       base.startingMrr = String(initialPayload.startingMrr ?? "");
       base.arpa = String(initialPayload.arpa ?? "");
@@ -505,125 +528,199 @@ function BlockCard({
         </div>
       </CardHeader>
       <CardContent>
-        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-          {block.type === "Personnel" && (
-            <>
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor={`${block.id}-roleName`}>
-                  Role name
-                </label>
-                <Input
-                  id={`${block.id}-roleName`}
-                  name="roleName"
-                  value={formState.roleName ?? ""}
-                  onChange={(event) =>
-                    handleChange("roleName", event.target.value)
-                  }
-                  disabled={isUpdating || !isEditing}
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-monthlyGrossSalary`}
-                >
-                  Monthly gross salary
-                </label>
-                <Input
-                  id={`${block.id}-monthlyGrossSalary`}
-                  name="monthlyGrossSalary"
-                  type="number"
-                  className="tabular-nums"
-                  value={formState.monthlyGrossSalary ?? ""}
-                  onChange={(event) =>
-                    handleChange("monthlyGrossSalary", event.target.value)
-                  }
-                  disabled={isUpdating || !isEditing}
-                  min={0}
-                  step="any"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-employerBurdenPercent`}
-                >
-                  Employer burden %
-                </label>
-                <Input
-                  id={`${block.id}-employerBurdenPercent`}
-                  name="employerBurdenPercent"
-                  type="number"
-                  className="tabular-nums"
-                  value={formState.employerBurdenPercent ?? ""}
-                  onChange={(event) =>
-                    handleChange("employerBurdenPercent", event.target.value)
-                  }
-                  disabled={isUpdating || !isEditing}
-                  min={0}
-                  max={1}
-                  step="any"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-startMonth`}
-                >
-                  Start month
-                </label>
-                <Input
-                  id={`${block.id}-startMonth`}
-                  name="startMonth"
-                  type="month"
-                  value={formState.startMonth ?? ""}
-                  onChange={(event) =>
-                    handleChange("startMonth", event.target.value)
-                  }
-                  disabled={isUpdating || !isEditing}
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-endMonth`}
-                >
-                  End month (optional)
-                </label>
-                <Input
-                  id={`${block.id}-endMonth`}
-                  name="endMonth"
-                  type="month"
-                  value={formState.endMonth ?? ""}
-                  onChange={(event) =>
-                    handleChange("endMonth", event.target.value)
-                  }
-                  disabled={isUpdating || !isEditing}
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor={`${block.id}-headcountCount`}
-                >
-                  Headcount count
-                </label>
-                <Input
-                  id={`${block.id}-headcountCount`}
-                  name="headcountCount"
-                  type="number"
-                  className="tabular-nums"
-                  value={formState.headcountCount ?? ""}
-                  onChange={(event) =>
-                    handleChange("headcountCount", event.target.value)
-                  }
-                  disabled={isUpdating || !isEditing}
-                  min={1}
-                  step={1}
-                />
-              </div>
-            </>
-          )}
+        {isEditing ? (
+          <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+            {block.type === "Personnel" && (
+              <>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium" htmlFor={`${block.id}-roleName`}>
+                    Role name
+                  </label>
+                  <Input
+                    id={`${block.id}-roleName`}
+                    name="roleName"
+                    value={formState.roleName ?? ""}
+                    onChange={(event) =>
+                      handleChange("roleName", event.target.value)
+                    }
+                    disabled={isUpdating}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    className="text-sm font-medium"
+                    htmlFor={`${block.id}-roleType`}
+                  >
+                    Type
+                  </label>
+                  <select
+                    id={`${block.id}-roleType`}
+                    name="roleType"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    value={formState.roleType ?? "standard"}
+                    onChange={(event) =>
+                      handleChange("roleType", event.target.value)
+                    }
+                    disabled={isUpdating}
+                  >
+                    <option value="standard">Standard</option>
+                    <option value="sales">Sales</option>
+                  </select>
+                </div>
+                {formState.roleType === "sales" && (
+                  <>
+                    <div className="flex flex-col gap-1">
+                      <label
+                        className="text-sm font-medium"
+                        htmlFor={`${block.id}-salesClientsPerMonth`}
+                      >
+                        New clients per month (at full ramp)
+                      </label>
+                      <Input
+                        id={`${block.id}-salesClientsPerMonth`}
+                        name="salesClientsPerMonth"
+                        type="number"
+                        className="tabular-nums"
+                        value={formState.salesClientsPerMonth ?? ""}
+                        onChange={(event) =>
+                          handleChange(
+                            "salesClientsPerMonth",
+                            event.target.value
+                          )
+                        }
+                        disabled={isUpdating}
+                        min={0}
+                        step="any"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label
+                        className="text-sm font-medium"
+                        htmlFor={`${block.id}-salesMonthsToFirstClient`}
+                      >
+                        Months until first client
+                      </label>
+                      <Input
+                        id={`${block.id}-salesMonthsToFirstClient`}
+                        name="salesMonthsToFirstClient"
+                        type="number"
+                        className="tabular-nums"
+                        value={formState.salesMonthsToFirstClient ?? ""}
+                        onChange={(event) =>
+                          handleChange(
+                            "salesMonthsToFirstClient",
+                            event.target.value
+                          )
+                        }
+                        disabled={isUpdating}
+                        min={0}
+                        step={1}
+                      />
+                    </div>
+                  </>
+                )}
+                <div className="flex flex-col gap-1">
+                  <label
+                    className="text-sm font-medium"
+                    htmlFor={`${block.id}-monthlyGrossSalary`}
+                  >
+                    Monthly gross salary
+                  </label>
+                  <Input
+                    id={`${block.id}-monthlyGrossSalary`}
+                    name="monthlyGrossSalary"
+                    type="number"
+                    className="tabular-nums"
+                    value={formState.monthlyGrossSalary ?? ""}
+                    onChange={(event) =>
+                      handleChange("monthlyGrossSalary", event.target.value)
+                    }
+                    disabled={isUpdating}
+                    min={0}
+                    step="any"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    className="text-sm font-medium"
+                    htmlFor={`${block.id}-employerBurdenPercent`}
+                  >
+                    Employer burden %
+                  </label>
+                  <Input
+                    id={`${block.id}-employerBurdenPercent`}
+                    name="employerBurdenPercent"
+                    type="number"
+                    className="tabular-nums"
+                    value={formState.employerBurdenPercent ?? ""}
+                    onChange={(event) =>
+                      handleChange("employerBurdenPercent", event.target.value)
+                    }
+                    disabled={isUpdating}
+                    min={0}
+                    max={1}
+                    step="any"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    className="text-sm font-medium"
+                    htmlFor={`${block.id}-startMonth`}
+                  >
+                    Start month
+                  </label>
+                  <Input
+                    id={`${block.id}-startMonth`}
+                    name="startMonth"
+                    type="month"
+                    value={formState.startMonth ?? ""}
+                    onChange={(event) =>
+                      handleChange("startMonth", event.target.value)
+                    }
+                    disabled={isUpdating}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    className="text-sm font-medium"
+                    htmlFor={`${block.id}-endMonth`}
+                  >
+                    End month (optional)
+                  </label>
+                  <Input
+                    id={`${block.id}-endMonth`}
+                    name="endMonth"
+                    type="month"
+                    value={formState.endMonth ?? ""}
+                    onChange={(event) =>
+                      handleChange("endMonth", event.target.value)
+                    }
+                    disabled={isUpdating}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    className="text-sm font-medium"
+                    htmlFor={`${block.id}-headcountCount`}
+                  >
+                    Headcount count
+                  </label>
+                  <Input
+                    id={`${block.id}-headcountCount`}
+                    name="headcountCount"
+                    type="number"
+                    className="tabular-nums"
+                    value={formState.headcountCount ?? ""}
+                    onChange={(event) =>
+                      handleChange("headcountCount", event.target.value)
+                    }
+                    disabled={isUpdating}
+                    min={1}
+                    step={1}
+                  />
+                </div>
+              </>
+            )}
 
           {block.type === "Revenue" && (
             <>
@@ -643,7 +740,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("startingMrr", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                   min={0}
                   step="any"
                 />
@@ -665,7 +762,7 @@ function BlockCard({
                       event.target.value as NumericInputMode
                     )
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                 >
                   <option value="Static">Static</option>
                   <option value="Referenced">Referenced</option>
@@ -690,7 +787,7 @@ function BlockCard({
                         event.target.value
                       )
                     }
-                    disabled={isUpdating || !isEditing}
+                    disabled={isUpdating}
                   >
                     <option value="">Select block...</option>
                     {allBlocks.map((candidate) => {
@@ -730,7 +827,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("arpa", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                   min={0}
                   step="any"
                 />
@@ -751,7 +848,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("monthlyChurnPercent", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                   min={0}
                   max={1}
                   step="any"
@@ -772,7 +869,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("billingFrequency", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                 >
                   <option value="Monthly">Monthly</option>
                   <option value="Annual Prepaid">Annual Prepaid</option>
@@ -799,7 +896,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("monthlyAdSpend", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                   min={0}
                   step="any"
                 />
@@ -820,7 +917,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("targetCac", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                   min={0}
                   step="any"
                 />
@@ -841,7 +938,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("salesCycleLagMonths", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                   min={0}
                   step={1}
                 />
@@ -865,7 +962,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("expenseName", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -884,7 +981,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("monthlyCost", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                   min={0}
                   step="any"
                 />
@@ -908,7 +1005,7 @@ function BlockCard({
                       event.target.value
                     )
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                   min={0}
                   max={1}
                   step="any"
@@ -934,7 +1031,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("fundingType", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                 >
                   <option value="Equity">Equity</option>
                   <option value="Debt">Debt</option>
@@ -956,7 +1053,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("amount", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                   min={0}
                   step="any"
                 />
@@ -976,7 +1073,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("monthReceived", event.target.value)
                   }
-                  disabled={isUpdating || !isEditing}
+                  disabled={isUpdating}
                 />
               </div>
             </>
@@ -988,25 +1085,137 @@ function BlockCard({
             </p>
           )}
 
-          {isEditing && (
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                size="sm"
-                disabled={isUpdating}
-                aria-busy={isUpdating}
-              >
-                {isUpdating && (
-                  <Loader2
-                    className="mr-2 h-4 w-4 animate-spin"
-                    aria-hidden
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isUpdating}
+              aria-busy={isUpdating}
+            >
+              {isUpdating && (
+                <Loader2
+                  className="mr-2 h-4 w-4 animate-spin"
+                  aria-hidden
+                />
+              )}
+              {isUpdating ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </form>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {block.type === "Personnel" && (
+              <div className="flex flex-col gap-2">
+                <ReadOnlyRow label="Role name" value={formState.roleName} />
+                <ReadOnlyRow
+                  label="Type"
+                  value={
+                    formState.roleType === "sales" ? "Sales" : "Standard"
+                  }
+                />
+                {formState.roleType === "sales" && (
+                  <>
+                    <ReadOnlyRow
+                      label="New clients per month (at full ramp)"
+                      value={formState.salesClientsPerMonth}
+                    />
+                    <ReadOnlyRow
+                      label="Months until first client"
+                      value={formState.salesMonthsToFirstClient}
+                    />
+                  </>
+                )}
+                <ReadOnlyRow
+                  label="Monthly gross salary"
+                  value={formState.monthlyGrossSalary}
+                />
+                <ReadOnlyRow
+                  label="Employer burden %"
+                  value={formState.employerBurdenPercent}
+                />
+                <ReadOnlyRow label="Start month" value={formState.startMonth} />
+                <ReadOnlyRow label="End month" value={formState.endMonth} />
+                <ReadOnlyRow
+                  label="Headcount count"
+                  value={formState.headcountCount}
+                />
+              </div>
+            )}
+            {block.type === "Revenue" && (
+              <div className="flex flex-col gap-2">
+                <ReadOnlyRow
+                  label="Starting MRR"
+                  value={
+                    startingMrrMode === "Referenced" && startingMrrReferenceId
+                      ? `From ${allBlocks.find((b) => b.id === startingMrrReferenceId)?.title ?? "block"}`
+                      : formState.startingMrr
+                  }
+                />
+                <ReadOnlyRow
+                  label="Starting MRR input mode"
+                  value={startingMrrMode}
+                />
+                {startingMrrMode === "Referenced" && startingMrrReferenceId && (
+                  <ReadOnlyRow
+                    label="Reference block"
+                    value={
+                      allBlocks.find((b) => b.id === startingMrrReferenceId)
+                        ?.title ?? "—"
+                    }
                   />
                 )}
-                {isUpdating ? "Saving..." : "Save"}
-              </Button>
-            </div>
-          )}
-        </form>
+                <ReadOnlyRow label="ARPA" value={formState.arpa} />
+                <ReadOnlyRow
+                  label="Monthly churn %"
+                  value={formState.monthlyChurnPercent}
+                />
+                <ReadOnlyRow
+                  label="Billing frequency"
+                  value={formState.billingFrequency}
+                />
+              </div>
+            )}
+            {block.type === "Marketing" && (
+              <div className="flex flex-col gap-2">
+                <ReadOnlyRow
+                  label="Monthly ad spend"
+                  value={formState.monthlyAdSpend}
+                />
+                <ReadOnlyRow label="Target CAC" value={formState.targetCac} />
+                <ReadOnlyRow
+                  label="Sales cycle lag (months)"
+                  value={formState.salesCycleLagMonths}
+                />
+              </div>
+            )}
+            {block.type === "OpEx" && (
+              <div className="flex flex-col gap-2">
+                <ReadOnlyRow
+                  label="Expense name"
+                  value={formState.expenseName}
+                />
+                <ReadOnlyRow label="Monthly cost" value={formState.monthlyCost} />
+                <ReadOnlyRow
+                  label="Annual growth rate %"
+                  value={formState.annualGrowthRatePercent}
+                />
+              </div>
+            )}
+            {block.type === "Capital" && (
+              <div className="flex flex-col gap-2">
+                <ReadOnlyRow
+                  label="Funding type"
+                  value={formState.fundingType}
+                />
+                <ReadOnlyRow label="Amount" value={formState.amount} />
+                <ReadOnlyRow
+                  label="Month received"
+                  value={formState.monthReceived}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

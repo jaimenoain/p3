@@ -47,23 +47,43 @@ const BlockDependenciesSchema = z.object({
     .optional(),
 });
 
+const PersonnelRoleTypeSchema = z.enum(["standard", "sales"]);
+
 const PersonnelPayloadSchema = z
   .object({
-  roleName: z.string().min(1, "Role name is required"),
-  monthlyGrossSalary: z
-    .coerce.number()
-    .min(0, "Monthly gross salary must be 0 or greater"),
-  employerBurdenPercent: z
-    .coerce.number()
-    .min(0, "Employer burden % must be between 0 and 1")
-    .max(1, "Employer burden % must be between 0 and 1"),
-  startMonth: MonthStringSchema,
-  endMonth: MonthStringSchema.optional().nullable(),
-  headcountCount: z
-    .coerce.number()
-    .int("Headcount must be an integer")
-    .min(1, "Headcount must be at least 1"),
-})
+    roleName: z.string().min(1, "Role name is required"),
+    monthlyGrossSalary: z
+      .coerce.number()
+      .min(0, "Monthly gross salary must be 0 or greater"),
+    employerBurdenPercent: z
+      .coerce.number()
+      .min(0, "Employer burden % must be between 0 and 1")
+      .max(1, "Employer burden % must be between 0 and 1"),
+    startMonth: MonthStringSchema,
+    endMonth: MonthStringSchema.optional().nullable(),
+    headcountCount: z
+      .coerce.number()
+      .int("Headcount must be an integer")
+      .min(1, "Headcount must be at least 1"),
+    roleType: PersonnelRoleTypeSchema.optional().default("standard"),
+    salesClientsPerMonth: z
+      .union([
+        z.coerce
+          .number()
+          .min(0, "New clients per month must be 0 or greater"),
+        z.null(),
+      ])
+      .optional(),
+    salesMonthsToFirstClient: z
+      .union([
+        z.coerce
+          .number()
+          .int("Months until first client must be an integer")
+          .min(0, "Months until first client cannot be negative"),
+        z.null(),
+      ])
+      .optional(),
+  })
   .merge(BlockDependenciesSchema);
 
 const BillingFrequencySchema = z.enum(["Monthly", "Annual Prepaid"]);
