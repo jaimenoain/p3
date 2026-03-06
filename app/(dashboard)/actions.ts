@@ -4,6 +4,19 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import {
+  BlockTypeSchema,
+  getPayloadSchemaForType,
+  NumericInputModeSchema,
+  type BlockPayload,
+  type BlockType,
+  type NumericInputConfig,
+} from "@/lib/block-schemas";
+import {
+  calculateFinancials,
+  type BlockDTO,
+  type FinancialTimeline,
+} from "@/lib/financial-engine";
 
 export type ProvisionResult = { ok: true } | { ok: false; error: string };
 
@@ -15,152 +28,16 @@ export type UpdateCashBalanceResult =
   | { ok: true }
   | { ok: false; error: string };
 
-const BlockTypeSchema = z.enum([
-  "Personnel",
-  "Revenue",
-  "Marketing",
-  "OpEx",
-  "Capital",
-]);
-
-export type BlockType = z.infer<typeof BlockTypeSchema>;
-
-const MonthStringSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format");
-
-const NumericInputModeSchema = z.enum(["Static", "Referenced", "Formula"]);
-
-const NumericInputConfigSchema = z.object({
-  mode: NumericInputModeSchema,
-  value: z.number().optional(),
-  referenceId: z.string().uuid().optional(),
-  formula: z.string().optional(),
-});
-
-export type NumericInputMode = z.infer<typeof NumericInputModeSchema>;
-export type NumericInputConfig = z.infer<typeof NumericInputConfigSchema>;
-
-const BlockDependenciesSchema = z.object({
-  dependencies: z
-    .record(z.string(), NumericInputConfigSchema)
-    .optional(),
-});
-
-const PersonnelRoleTypeSchema = z.enum(["standard", "sales"]);
-
-const PersonnelPayloadSchema = z
-  .object({
-    roleName: z.string().min(1, "Role name is required"),
-    monthlyGrossSalary: z
-      .coerce.number()
-      .min(0, "Monthly gross salary must be 0 or greater"),
-    employerBurdenPercent: z
-      .coerce.number()
-      .min(0, "Employer burden % must be between 0 and 1")
-      .max(1, "Employer burden % must be between 0 and 1"),
-    startMonth: MonthStringSchema,
-    endMonth: MonthStringSchema.optional().nullable(),
-    headcountCount: z
-      .coerce.number()
-      .int("Headcount must be an integer")
-      .min(1, "Headcount must be at least 1"),
-    roleType: PersonnelRoleTypeSchema.optional().default("standard"),
-    salesClientsPerMonth: z
-      .union([
-        z.coerce
-          .number()
-          .min(0, "New clients per month must be 0 or greater"),
-        z.null(),
-      ])
-      .optional(),
-    salesMonthsToFirstClient: z
-      .union([
-        z.coerce
-          .number()
-          .int("Months until first client must be an integer")
-          .min(0, "Months until first client cannot be negative"),
-        z.null(),
-      ])
-      .optional(),
-  })
-  .merge(BlockDependenciesSchema);
-
-const BillingFrequencySchema = z.enum(["Monthly", "Annual Prepaid"]);
-
-const RevenuePayloadSchema = z
-  .object({
-  startingMrr: z
-    .coerce.number()
-    .min(0, "Starting MRR must be 0 or greater"),
-  arpa: z.coerce.number().min(0, "ARPA must be 0 or greater"),
-  monthlyChurnPercent: z
-    .coerce.number()
-    .min(0, "Monthly churn % must be between 0 and 1")
-    .max(1, "Monthly churn % must be between 0 and 1"),
-  monthlyMrrGrowthPercent: z
-    .union([
-      z
-        .coerce.number()
-        .min(0, "Upsell / expansion growth % must be between 0 and 1")
-        .max(1, "Upsell / expansion growth % must be between 0 and 1"),
-      z.null(),
-    ])
-    .optional(),
-  billingFrequency: BillingFrequencySchema,
-})
-  .merge(BlockDependenciesSchema);
-
-const MarketingPayloadSchema = z
-  .object({
-  monthlyAdSpend: z
-    .coerce.number()
-    .min(0, "Monthly ad spend must be 0 or greater"),
-  targetCac: z
-    .coerce.number()
-    .min(0, "Target CAC must be 0 or greater"),
-  salesCycleLagMonths: z
-    .coerce.number()
-    .int("Sales cycle lag must be an integer number of months")
-    .min(0, "Sales cycle lag cannot be negative"),
-})
-  .merge(BlockDependenciesSchema);
-
-const OpExPayloadSchema = z
-  .object({
-  expenseName: z.string().min(1, "Expense name is required"),
-  monthlyCost: z
-    .coerce.number()
-    .min(0, "Monthly cost must be 0 or greater"),
-  annualGrowthRatePercent: z
-    .coerce.number()
-    .min(0, "Annual growth rate % must be between 0 and 1")
-    .max(1, "Annual growth rate % must be between 0 and 1"),
-})
-  .merge(BlockDependenciesSchema);
-
-const FundingTypeSchema = z.enum(["Equity", "Debt"]);
-
-const CapitalPayloadSchema = z
-  .object({
-  fundingType: FundingTypeSchema,
-  amount: z.coerce.number().min(0, "Amount must be 0 or greater"),
-  monthReceived: MonthStringSchema,
-})
-  .merge(BlockDependenciesSchema);
-
-export type PersonnelPayload = z.infer<typeof PersonnelPayloadSchema>;
-export type RevenuePayload = z.infer<typeof RevenuePayloadSchema>;
-export type MarketingPayload = z.infer<typeof MarketingPayloadSchema>;
-export type OpExPayload = z.infer<typeof OpExPayloadSchema>;
-export type CapitalPayload = z.infer<typeof CapitalPayloadSchema>;
-
-export type BlockPayload =
-  | PersonnelPayload
-  | RevenuePayload
-  | MarketingPayload
-  | OpExPayload
-  | CapitalPayload;
+export type {
+  BlockPayload,
+  BlockType,
+  CapitalPayload,
+  NumericInputConfig,
+  NumericInputMode,
+  OpExPayload,
+  PersonnelPayload,
+  RevenuePayload,
+} from "@/lib/block-schemas";
 
 export type BlockRecord = {
   id: string;
@@ -194,6 +71,18 @@ export type UpdateScenarioBlocksResult =
   | { ok: false; error: string };
 
 export type DeleteBlockResult = { ok: true } | { ok: false; error: string };
+
+/** Scenario plus computed 12-month financial timeline (DOMAIN_MODEL ScenarioDTO + financials). */
+export type GetScenarioFinancialsResult =
+  | {
+      ok: true;
+      scenarioId: string;
+      name: string;
+      globalAssumptions: Record<string, unknown>;
+      blocks: BlockDTO[];
+      financialTimeline: FinancialTimeline;
+    }
+  | { ok: false; error: string };
 
 type PayloadWithDependencies = {
   dependencies?: Record<string, NumericInputConfig>;
@@ -363,6 +252,98 @@ export async function getScenarioBlocksAction(
   };
 }
 
+const GetScenarioFinancialsInputSchema = z.object({
+  scenarioId: z.string().uuid().optional(),
+});
+
+/**
+ * Fetches scenario, workspace starting cash, and active blocks; runs the financial
+ * engine to produce a 12-month timeline (MRR, cash in/out, net burn, ending cash).
+ * When scenarioId is omitted, uses the authenticated user's active baseline scenario.
+ * RLS on workspaces, scenarios, and blocks enforces tenant isolation.
+ */
+export async function getScenarioFinancials(
+  scenarioId?: string
+): Promise<GetScenarioFinancialsResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { ok: false, error: "Not authenticated." };
+  }
+
+  let effectiveScenarioId = scenarioId;
+  if (!effectiveScenarioId) {
+    effectiveScenarioId = await resolveDefaultScenarioId(supabase, user.id);
+    if (!effectiveScenarioId) {
+      return { ok: false, error: "No active scenario found for this workspace." };
+    }
+  } else {
+    const parsed = GetScenarioFinancialsInputSchema.safeParse({ scenarioId: effectiveScenarioId });
+    if (!parsed.success) {
+      return { ok: false, error: "Invalid scenario id." };
+    }
+  }
+
+  const { data: scenario, error: scenarioError } = await supabase
+    .from("scenarios")
+    .select("id, workspace_id, name, global_assumptions")
+    .eq("id", effectiveScenarioId)
+    .maybeSingle();
+
+  if (scenarioError || !scenario) {
+    return { ok: false, error: "Scenario not found or access denied." };
+  }
+
+  const { data: workspace, error: workspaceError } = await supabase
+    .from("workspaces")
+    .select("starting_cash_balance")
+    .eq("id", scenario.workspace_id)
+    .maybeSingle();
+
+  if (workspaceError || !workspace) {
+    return { ok: false, error: "Workspace not found or access denied." };
+  }
+
+  const startingCash = Number(workspace.starting_cash_balance);
+  const safeStartingCash = Number.isFinite(startingCash) && startingCash >= 0 ? startingCash : 0;
+
+  const { data: blocksData, error: blocksError } = await supabase
+    .from("blocks")
+    .select("id, type, is_active, title, payload")
+    .eq("scenario_id", effectiveScenarioId)
+    .order("created_at", { ascending: true });
+
+  if (blocksError) {
+    return { ok: false, error: "Failed to load blocks." };
+  }
+
+  const blocks: BlockDTO[] = (blocksData ?? []).map((row) => ({
+    blockId: row.id,
+    type: row.type as BlockDTO["type"],
+    isActive: row.is_active ?? true,
+    title: row.title ?? null,
+    properties: (row.payload as Record<string, unknown>) ?? {},
+  }));
+
+  const financialTimeline = calculateFinancials(safeStartingCash, blocks);
+
+  const globalAssumptions =
+    (scenario.global_assumptions as Record<string, unknown>) ?? {};
+
+  return {
+    ok: true,
+    scenarioId: scenario.id,
+    name: scenario.name,
+    globalAssumptions,
+    blocks,
+    financialTimeline,
+  };
+}
+
 const CreateBlockInputSchema = z.object({
   scenarioId: z.string().uuid().optional(),
   type: BlockTypeSchema,
@@ -425,25 +406,8 @@ export async function createBlockMutation(
 const UpdateBlockInputSchema = z.object({
   blockId: z.string().uuid(),
   title: z.string().min(1).max(120).optional(),
-  payload: z.record(z.string(), z.any()),
+  payload: z.record(z.string(), z.unknown()),
 });
-
-function getPayloadSchemaForType(type: BlockType) {
-  switch (type) {
-    case "Personnel":
-      return PersonnelPayloadSchema;
-    case "Revenue":
-      return RevenuePayloadSchema;
-    case "Marketing":
-      return MarketingPayloadSchema;
-    case "OpEx":
-      return OpExPayloadSchema;
-    case "Capital":
-      return CapitalPayloadSchema;
-    default:
-      return PersonnelPayloadSchema;
-  }
-}
 
 /**
  * Minimal default payload per block type so dependency-only updates validate
