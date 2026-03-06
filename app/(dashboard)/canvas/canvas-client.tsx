@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Pencil } from "lucide-react";
 import type { BlockRecord, BlockType, NumericInputMode } from "../actions";
 import {
   createBlockMutation,
@@ -250,6 +250,12 @@ function BlockCard({
     "startingMrr"
   ] ?? { mode: "Static" as NumericInputMode, referenceId: "" };
 
+  const [isEditing, setIsEditing] = useState<boolean>(
+    Object.keys(initialPayload).length === 0
+  );
+
+  const [title, setTitle] = useState<string>(block.title ?? block.type);
+
   const [formState, setFormState] = useState<Record<string, string>>(() => {
     const base: Record<string, string> = {};
 
@@ -295,9 +301,8 @@ function BlockCard({
   const [startingMrrMode, setStartingMrrMode] = useState<NumericInputMode>(
     initialStartingMrrDependency.mode
   );
-  const [startingMrrReferenceId, setStartingMrrReferenceId] = useState<string>(
-    initialStartingMrrDependency.referenceId ?? ""
-  );
+  const [startingMrrReferenceId, setStartingMrrReferenceId] =
+    useState<string>(initialStartingMrrDependency.referenceId ?? "");
 
   function handleChange(name: string, value: string) {
     setFormState((prev) => ({ ...prev, [name]: value }));
@@ -320,6 +325,7 @@ function BlockCard({
       const result = await runWithRecalculation(() =>
         updateBlockMutation({
           blockId: block.id,
+          title: (title ?? "").trim() || block.type,
           payload,
         })
       );
@@ -330,6 +336,8 @@ function BlockCard({
       }
 
       onUpdated(result.block);
+      setTitle(result.block.title ?? result.block.type);
+      setIsEditing(false);
     });
   }
 
@@ -449,13 +457,42 @@ function BlockCard({
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <div>
-            <CardTitle>{block.type}</CardTitle>
+          <div className="flex flex-col gap-1">
+            {isEditing ? (
+              <Input
+                className="h-8 text-sm font-semibold"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                onBlur={(event) => {
+                  const trimmed = (event.target.value ?? "").trim();
+                  setTitle(trimmed || block.type);
+                }}
+                disabled={isUpdating}
+                aria-label="Block title"
+              />
+            ) : (
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm font-semibold">
+                  {title || block.type}
+                </CardTitle>
+              </div>
+            )}
             <CardDescription>
-              {isActive ? "Active" : "Inactive"} block
+              {block.type} • {isActive ? "Active" : "Inactive"} block
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            {!isEditing && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditing(true)}
+                aria-label="Edit block"
+              >
+                <Pencil className="h-4 w-4" aria-hidden />
+              </Button>
+            )}
             <span className="text-xs font-medium text-muted-foreground">
               On/Off
             </span>
@@ -482,7 +519,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("roleName", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -501,7 +538,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("monthlyGrossSalary", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   step="any"
                 />
@@ -522,7 +559,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("employerBurdenPercent", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   max={1}
                   step="any"
@@ -543,7 +580,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("startMonth", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -561,7 +598,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("endMonth", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -580,7 +617,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("headcountCount", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={1}
                   step={1}
                 />
@@ -606,7 +643,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("startingMrr", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   step="any"
                 />
@@ -628,7 +665,7 @@ function BlockCard({
                       event.target.value as NumericInputMode
                     )
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                 >
                   <option value="Static">Static</option>
                   <option value="Referenced">Referenced</option>
@@ -653,7 +690,7 @@ function BlockCard({
                         event.target.value
                       )
                     }
-                    disabled={isUpdating}
+                    disabled={isUpdating || !isEditing}
                   >
                     <option value="">Select block...</option>
                     {allBlocks.map((candidate) => {
@@ -661,13 +698,16 @@ function BlockCard({
                       const disabled =
                         candidate.id === block.id ||
                         downstreamIds.has(candidate.id);
+                      const label = candidate.title
+                        ? `${candidate.title} (${candidate.type})`
+                        : candidate.type;
                       return (
                         <option
                           key={candidate.id}
                           value={candidate.id}
                           disabled={disabled}
                         >
-                          {candidate.type}
+                          {label}
                         </option>
                       );
                     })}
@@ -690,7 +730,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("arpa", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   step="any"
                 />
@@ -711,7 +751,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("monthlyChurnPercent", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   max={1}
                   step="any"
@@ -732,7 +772,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("billingFrequency", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                 >
                   <option value="Monthly">Monthly</option>
                   <option value="Annual Prepaid">Annual Prepaid</option>
@@ -759,7 +799,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("monthlyAdSpend", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   step="any"
                 />
@@ -780,7 +820,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("targetCac", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   step="any"
                 />
@@ -801,7 +841,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("salesCycleLagMonths", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   step={1}
                 />
@@ -825,7 +865,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("expenseName", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -844,7 +884,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("monthlyCost", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   step="any"
                 />
@@ -868,7 +908,7 @@ function BlockCard({
                       event.target.value
                     )
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   max={1}
                   step="any"
@@ -894,7 +934,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("fundingType", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                 >
                   <option value="Equity">Equity</option>
                   <option value="Debt">Debt</option>
@@ -916,7 +956,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("amount", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                   min={0}
                   step="any"
                 />
@@ -936,7 +976,7 @@ function BlockCard({
                   onChange={(event) =>
                     handleChange("monthReceived", event.target.value)
                   }
-                  disabled={isUpdating}
+                  disabled={isUpdating || !isEditing}
                 />
               </div>
             </>
@@ -948,22 +988,24 @@ function BlockCard({
             </p>
           )}
 
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              size="sm"
-              disabled={isUpdating}
-              aria-busy={isUpdating}
-            >
-              {isUpdating && (
-                <Loader2
-                  className="mr-2 h-4 w-4 animate-spin"
-                  aria-hidden
-                />
-              )}
-              {isUpdating ? "Saving..." : "Save"}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isUpdating}
+                aria-busy={isUpdating}
+              >
+                {isUpdating && (
+                  <Loader2
+                    className="mr-2 h-4 w-4 animate-spin"
+                    aria-hidden
+                  />
+                )}
+                {isUpdating ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          )}
         </form>
       </CardContent>
     </Card>

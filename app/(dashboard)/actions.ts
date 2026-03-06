@@ -136,6 +136,7 @@ export type BlockPayload =
 export type BlockRecord = {
   id: string;
   scenario_id: string;
+  title: string | null;
   type: BlockType;
   is_active: boolean;
   payload: BlockPayload;
@@ -316,7 +317,7 @@ export async function getScenarioBlocksAction(
 
   const { data, error } = await supabase
     .from("blocks")
-    .select("id, scenario_id, type, is_active, payload, created_at, updated_at")
+    .select("id, scenario_id, title, type, is_active, payload, created_at, updated_at")
     .eq("scenario_id", effectiveScenarioId)
     .order("created_at", { ascending: true });
 
@@ -371,10 +372,11 @@ export async function createBlockMutation(
       id,
       scenario_id: effectiveScenarioId,
       type: parsed.data.type,
+      title: parsed.data.type,
       is_active: true,
       payload: {},
     })
-    .select("id, scenario_id, type, is_active, payload, created_at, updated_at")
+    .select("id, scenario_id, title, type, is_active, payload, created_at, updated_at")
     .single();
 
   if (error || !data) {
@@ -391,6 +393,7 @@ export async function createBlockMutation(
 
 const UpdateBlockInputSchema = z.object({
   blockId: z.string().uuid(),
+  title: z.string().min(1).max(120).optional(),
   payload: z.record(z.string(), z.any()),
 });
 
@@ -450,7 +453,7 @@ export async function updateBlockMutation(
     error: blockError,
   } = await supabase
     .from("blocks")
-    .select("id, scenario_id, type")
+    .select("id, scenario_id, title, type")
     .eq("id", parsed.data.blockId)
     .maybeSingle();
 
@@ -476,10 +479,11 @@ export async function updateBlockMutation(
   const { data, error } = await supabase
     .from("blocks")
     .update({
+      ...(parsed.data.title !== undefined ? { title: parsed.data.title } : {}),
       payload: payloadResult.data as BlockPayload,
     })
     .eq("id", existingBlock.id)
-    .select("id, scenario_id, type, is_active, payload, created_at, updated_at")
+    .select("id, scenario_id, title, type, is_active, payload, created_at, updated_at")
     .single();
 
   if (error || !data) {
@@ -652,9 +656,18 @@ export async function updateBlockDependencyMutation(
 
   const validatedPayload = payloadSchema.safeParse(nextPayload);
   if (!validatedPayload.success) {
+    const formatted = validatedPayload.error.flatten();
+    const message =
+      formatted.formErrors[0] ??
+      Object.values(formatted.fieldErrors)[0]?.[0] ??
+      "Unable to update dependency. Please make sure all required fields for this block are filled out and saved, then try again.";
+
     return {
       ok: false,
-      error: "Invalid dependency configuration.",
+      error:
+        typeof message === "string"
+          ? message
+          : "Unable to update dependency. Please make sure all required fields for this block are filled out and saved, then try again.",
     };
   }
 
