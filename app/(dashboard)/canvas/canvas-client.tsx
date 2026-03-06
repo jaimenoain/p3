@@ -901,24 +901,29 @@ function BlockCard({
                       disabled={isUpdating}
                     >
                       <option value="">Select block...</option>
-                      {allBlocks.map((candidate) => {
-                        const downstreamIds = getDownstreamIdsForBlock();
-                        const disabled =
-                          candidate.id === block.id ||
-                          downstreamIds.has(candidate.id);
-                        const label = candidate.title
-                          ? `${candidate.title} (${candidate.type})`
-                          : candidate.type;
-                        return (
-                          <option
-                            key={candidate.id}
-                            value={candidate.id}
-                            disabled={disabled}
-                          >
-                            {label}
-                          </option>
-                        );
-                      })}
+                      {allBlocks
+                        .filter(
+                          (candidate) =>
+                            getReferencedNewCustomersValue(candidate) !== null
+                        )
+                        .map((candidate) => {
+                          const downstreamIds = getDownstreamIdsForBlock();
+                          const disabled =
+                            candidate.id === block.id ||
+                            downstreamIds.has(candidate.id);
+                          const label = candidate.title
+                            ? `${candidate.title} (${candidate.type})`
+                            : candidate.type;
+                          return (
+                            <option
+                              key={candidate.id}
+                              value={candidate.id}
+                              disabled={disabled}
+                            >
+                              {label}
+                            </option>
+                          );
+                        })}
                     </select>
                   </div>
                   {newCustomersReferenceId && (() => {
