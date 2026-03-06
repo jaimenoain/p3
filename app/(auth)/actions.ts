@@ -1,9 +1,8 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export type ActionResult = { error?: string; success?: boolean };
+export type ActionResult = { error?: string; success?: boolean; redirectTo?: string };
 
 export async function loginAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
   const email = formData.get("email") as string | null;
@@ -16,7 +15,9 @@ export async function loginAction(_prev: unknown, formData: FormData): Promise<A
   if (error) {
     return { error: "Invalid email or password." };
   }
-  redirect("/dashboard");
+  // Return success and let the client redirect to avoid "unexpected response" errors
+  // when the Server Action redirect is altered by proxies (e.g. Amplify).
+  return { success: true, redirectTo: "/dashboard" };
 }
 
 export async function signUpAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
@@ -35,7 +36,7 @@ export async function signUpAction(_prev: unknown, formData: FormData): Promise<
   if (error) {
     return { error: error.message };
   }
-  redirect("/login");
+  return { success: true, redirectTo: "/login" };
 }
 
 export async function forgotPasswordAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
@@ -53,8 +54,11 @@ export async function forgotPasswordAction(_prev: unknown, formData: FormData): 
   return { success: true };
 }
 
-export async function logoutAction(): Promise<void> {
+export async function logoutAction(
+  _prev: unknown,
+  _formData?: FormData
+): Promise<ActionResult> {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/login");
+  return { success: true, redirectTo: "/login" };
 }

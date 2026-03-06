@@ -1,6 +1,10 @@
 # **P3: Unified Data & API Contract**
 
-### 
+### Phase 1 implementation note
+
+Phase 1 (Walking Skeleton) uses **Supabase Auth** for sign-in, sign-up, forgot-password, and session. No `/api/v1/*` routes or UserContextDTO/workspace APIs are implemented yet. The domains and API contracts below remain the source of truth for Phase 2 and beyond.
+
+---
 
 ### **Domain 1: The Tenant & Access Domain**
 

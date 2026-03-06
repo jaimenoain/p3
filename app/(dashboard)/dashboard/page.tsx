@@ -1,3 +1,3 @@
-export default function DashboardPage() {
-  return <h1>Dashboard</h1>;
+export default function RunwayDashboardPage() {
+  return <h1>Runway Dashboard</h1>;
 }

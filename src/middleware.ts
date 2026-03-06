@@ -4,7 +4,17 @@ import { type NextRequest, NextResponse } from "next/server";
 const LOGIN_PATH = "/login";
 const DASHBOARD_PATH = "/dashboard";
 
-const protectedRoutePrefixes = ["/dashboard", "/assets", "/airlock", "/vault", "/governance", "/settings"];
+const protectedRoutePrefixes = [
+  "/dashboard",
+  "/canvas",
+  "/import",
+  "/actuals",
+  "/settings",
+  "/assets",
+  "/airlock",
+  "/vault",
+  "/governance",
+];
 const guestRoutePrefix = "/guest";
 
 function isProtectedPath(pathname: string): boolean {
