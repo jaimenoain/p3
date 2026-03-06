@@ -600,7 +600,7 @@ function BlockCard({
       base.roleName = String(initialPayload.roleName ?? "");
       base.monthlyGrossSalary = String(initialPayload.monthlyGrossSalary ?? "");
       base.employerBurdenPercent = decimalToPercentageDisplay(
-        initialPayload.employerBurdenPercent
+        initialPayload.employerBurdenPercent as string | number | null | undefined
       );
       base.startMonth = String(initialPayload.startMonth ?? "");
       base.endMonth = String(initialPayload.endMonth ?? "");
@@ -620,12 +620,12 @@ function BlockCard({
           : 0
       );
       base.monthlyMrrGrowthPercent = decimalToPercentageDisplay(
-        initialPayload.monthlyMrrGrowthPercent
+        initialPayload.monthlyMrrGrowthPercent as string | number | null | undefined
       );
       base.arpa = String(initialPayload.arpa ?? "");
       base.setupFee = String(initialPayload.setupFee ?? "");
       base.monthlyChurnPercent = decimalToPercentageDisplay(
-        initialPayload.monthlyChurnPercent
+        initialPayload.monthlyChurnPercent as string | number | null | undefined
       );
       base.billingFrequency = String(
         initialPayload.billingFrequency ?? "Monthly"
@@ -641,10 +641,10 @@ function BlockCard({
       base.expenseName = String(initialPayload.expenseName ?? "");
       base.monthlyCost = String(initialPayload.monthlyCost ?? "");
       base.annualGrowthRatePercent = decimalToPercentageDisplay(
-        initialPayload.annualGrowthRatePercent
+        initialPayload.annualGrowthRatePercent as string | number | null | undefined
       );
       base.percentageOfRevenue = decimalToPercentageDisplay(
-        initialPayload.percentageOfRevenue
+        initialPayload.percentageOfRevenue as string | number | null | undefined
       );
       base.fixedCostPerCustomer = String(
         initialPayload.fixedCostPerCustomer ?? ""
